@@ -1,52 +1,90 @@
-#PvpythonScript
+# PvpythonScript
 
+#
+# ver 20240127
+# 
+# arg1: Laterality. L or R.
+# arg2: View. Med or Lat.
+# arg3: displayColorBarAndLegend. True or False.
+#
+#
+# --------------------------------------------------------------
 
-#import sys
-#args = sys.argv
-#print("arg1: " + args[1])
+# Main Settings
+
+import sys
+args = sys.argv
+#print(len(args))
+if len(args) == 4:
+    Laterality = args[1]
+    View = args[2]
+    if args[3].lower() == "true": 
+        displayColorBarAndLegend = True
+    else: 
+        displayColorBarAndLegend = False
+else: 
+    Laterality = "L"
+    #Laterality = "R"
+    #View = "Med"
+    View = "Lat"
+    displayColorBarAndLegend = True
+    #displayColorBarAndLegend = False
+
+print("Laterality: " + Laterality)
+print("View: " + View)
+print("displayColorBarAndLegend: " + str(displayColorBarAndLegend))
+
 
 # --------------------------------------------------------------
 
-Laterality = "L"
-#Laterality = "R"
+# Other Settings
 
-#View = "Med"
-View = "Lat"
-
-UL_on_Fig = +50
-LL_on_Fig = -50
-
-#LUT = 'Fast'
-#LUT = 'Cool to Warm'
-#LUT = 'Black-Body Radiation'
-#LUT = 'Inferno (matplotlib)'
-#LUT = 'Blue Orange (divergent)'
-LUT = 'Cold and Hot'
-#LUT = 'Rainbow Desaturated'
-#LUT = 'Rainbow Uniform'
-#LUT = 'Turbo'
-#LUT = 'Cool to Warm (Extended)'
-#LUT = 'X Ray'
-#LUT = 'Black, Blue and White'
-#LUT = 'Viridis (matplotlib)'
-#LUT = 'Linear Green (Gr4L)'
-#LUT = 'Blue - Green - Orange'
-#LUT = 'Yellow - Gray - Blue'
-
-SPECULAR = 1.0 # 輝き
-
-ValueName = "Sample Value"
-Unit = "Point"
+import configparser
+config = configparser.ConfigParser()
+config.read('./config.ini', encoding='utf-8')
 
 
-#displayColorBarAndLegendOnlyOnRtLat = False
-displayColorBarAndLegend = True
+UL_on_Fig = float( config.get('Figure', 'value_range_ul_on_figure') )
+LL_on_Fig = float( config.get('Figure', 'value_range_ll_on_figure') )
+if UL_on_Fig < LL_on_Fig: 
+    tmp = LL_on_Fig
+    LL_on_Fig = UL_on_Fig
+    UL_on_Fig = tmp
 
-makeBarOrientationHorizontal = False
 
-showPreview = True
+LUT = config.get('Figure', 'LUT')
+LUT = LUT.replace("\"", "").replace("\'", "")
 
-# --------------------------------------------------------------
+ValueName = config.get('Figure', 'ValueName')
+ValueName = ValueName.replace("\"", "").replace("\'", "")
+
+Unit = config.get('Figure', 'Unit')
+Unit = Unit.replace("\"", "").replace("\'", "")
+
+makeBarOrientationHorizontal = config.get('Figure', 'makeBarOrientationHorizontal')
+if makeBarOrientationHorizontal.lower() == "true": 
+    makeBarOrientationHorizontal = True
+else: 
+    makeBarOrientationHorizontal = False
+
+
+showPreview = config.get('Figure', 'showPreview')
+if showPreview.lower() == "true": 
+    showPreview = True
+else: 
+    showPreview = False
+
+SPECULAR = float( config.get('Figure', 'SPECULAR') )
+
+
+print("UL_on_Fig: " + str(UL_on_Fig))
+print("LL_on_Fig: " + str(LL_on_Fig))
+print("LUT: " + LUT)
+print("ValueName: " + ValueName)
+print("Unit: " + Unit)
+print("makeBarOrientationHorizontal: " + str(makeBarOrientationHorizontal) )
+print("showPreview: " + str(showPreview))
+print("SPECULAR: " + str(SPECULAR))
 
 # --------------------------------------------------------------
 
@@ -214,6 +252,9 @@ for REGION in Regions_with_Val:
     #    REGION.SetScalarBarVisibility(renderView1, True) 
     if displayColorBarAndLegend: 
         REGION.SetScalarBarVisibility(renderView1, True) 
+    else: 
+        REGION.SetScalarBarVisibility(renderView1, False) 
+    
     
 
 
@@ -262,7 +303,7 @@ else:
 # カメラ位置の調整
 #
 
-renderView1.ResetActiveCameraToPositiveX()
+#renderView1.ResetActiveCameraToPositiveX()
 #renderView1.ResetActiveCameraToNegativeX()
 #renderView1.ResetActiveCameraToPositiveY()
 #renderView1.ResetActiveCameraToNegativeY()
@@ -403,7 +444,9 @@ Interact()
 #
 ## Save a screenshot of the active view
 
-SaveScreenshot("./png/" + ValueName.replace(" ", "_") + "_" + Laterality + "_" + View + ".png")
+output_file_path = "./png/" + ValueName.replace(" ", "_") + "_" + Laterality + "_" + View + ".png"
+SaveScreenshot(output_file_path)
+print(output_file_path + " was generated.")
 
 #
 ## Save a screenshot of a layout (multiple splitted view)

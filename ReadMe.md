@@ -22,7 +22,7 @@ Step 2 が必要な理由は、VTKファイルのData Fieldに任意の値を書
 ITK-SNAPが出力する素の状態のVTKファイルには値０が格納されている。
 ITK-SNAP上でどのようにしたら任意の値を格納したVTKファイルを生成できるのかよくわからないが、VTKファイルはアスキーファイルであるためのData FieldをPythonを使って書き換えるという加工を加える。
 
-Step 3 は、ParaViewで「Tools -> Start Track」でできる。何度もVTKファイルを読込み、描画操作の要点を掴み、それらをスクリプト化する。
+Step 3 は、ParaViewで「Tools -> Start Trace」でできる。何度もVTKファイルを読込み、描画操作の要点を掴み、それらをスクリプト化する。
 
 Step 4ではpvpythonコマンドを使ってStep 3を経て得たpythonスクリプトを走らせる。
 
@@ -42,7 +42,7 @@ Step 4ではpvpythonコマンドを使ってStep 3を経て得たpythonスクリ
 LabelTables
 
 
-
+1. ValueTablesに領域
 
 
 
