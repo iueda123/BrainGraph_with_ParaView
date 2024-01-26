@@ -1,12 +1,49 @@
-論文のFigure用の三次元脳グラフの生成方法
+ParaViewを使った三次元脳グラフの生成方法
 
 この方法を使えば、非常に自由度の高い三次元脳グラフが作れるはず。
 
 
-## これはなにか？できることの概要
+## これはなにか？実現したいことの概要
 
-  * ITK-SNAPとParaViewがともにVTKファイルを扱える。
+Python等のスクリプト言語を使って、脳の深部構造を可視化する方法を調べているうちに、
+ITK-SNAPがROI（Segmentation）のSurface MeshをVTKというファイル形式で出力できること、
+そして、ParaViewというソフトウェアがVTKファイルを取り扱えて、
+またParaViewがPythonスクリプトを使った操作レコーディング機能があるということを知り、
+以下のような流れで三次元の脳のグラフを生成する方法を思い立ちました。
+
+Step 1. ITK-SNAPでROIのSruface MeshをVTK形式で出力。
+Step 2. 出力したVTKファイルを加工
+Step 3. ParaViewでVTKファイルを読込み、描画操作をスクリプト化
+Step 4. スクリプトを整え、自動でPNGファイルを出力させる。
+
+Step 1 は、ITK-SNAP上で「Segmentation -> Export as Surface Mesh... -> Export a mesh for a single label -> [NEXT] -> Mesh file name -> [Finish]」でできる。Segmentation自体はfsaverageデータ内のNIfTIファイルを利用する。ITK-SNAPを利用してNIfTIを加工する。
+
+Step 2 が必要な理由は、VTKファイルのData Fieldに任意の値を書き込むためである。
+ITK-SNAPが出力する素の状態のVTKファイルには値０が格納されている。
+ITK-SNAP上でどのようにしたら任意の値を格納したVTKファイルを生成できるのかよくわからないが、VTKファイルはアスキーファイルであるためのData FieldをPythonを使って書き換えるという加工を加える。
+
+Step 3 は、ParaViewで「Tools -> Start Track」でできる。何度もVTKファイルを読込み、描画操作の要点を掴み、それらをスクリプト化する。
+
+Step 4ではpvpythonコマンドを使ってStep 3を経て得たpythonスクリプトを走らせる。
+
+
+-------- 
+
+
+## ファイル・フォルダの説明と主要スクリプトファイルの使い方
+
+  * ValueTables: 
   * 
+  * Infuse_Values_into_VTK_Files.py: VTKに値を流し込み値を保持したVTKファイル達を生成するスクリプト
+  * PvpythonScript_Make_Figure.py: 値を保持VTK達を読込みPNGを生成するスクリプト。
+  * 
+
+
+LabelTables
+
+
+
+
 
 
 --------
@@ -45,11 +82,14 @@ ITK-SNAPでは各トライアングルに平均0、値幅-1〜+1が割り振ら�
 
 --------
 
-## 事前準備
 
-### ITK-Snap
+### ITK-Snapについて
 
-### ParaView
+
+--------
+
+
+### ParaViewについて
     
 インストール方法
 公式ページ（ https://www.paraview.org/ ）から、以下を入手する。
