@@ -90,3 +90,5 @@ L_LatVent	Lt_LatVent.vtk
 R_LatVent	Rt_LatVent.vtk
 L_Cortex	Lt_ribbon.vtk
 R_Cortex	Rt_ribbon.vtk
+L_Empty_CC	Lt_Empty_CC.vtk
+R_Empty_CC	Rt_Empty_CC.vtk

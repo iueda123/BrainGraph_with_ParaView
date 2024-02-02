@@ -8,9 +8,11 @@
 # arg3: displayColorBarAndLegend. True or False.
 #
 #
+
+# 
 # --------------------------------------------------------------
 
-# Main Settings
+# Main Settings from args
 
 import sys
 args = sys.argv
@@ -36,57 +38,73 @@ print("displayColorBarAndLegend: " + str(displayColorBarAndLegend))
 
 
 # --------------------------------------------------------------
-
-# Other Settings
+#
+# Other Settings from config.ini
+# 
+#
 
 import configparser
 config = configparser.ConfigParser()
 config.read('./config.ini', encoding='utf-8')
 
-
+# UL_on_Fig, LL_on_Fig
 UL_on_Fig = float( config.get('Figure', 'value_range_ul_on_figure') )
 LL_on_Fig = float( config.get('Figure', 'value_range_ll_on_figure') )
 if UL_on_Fig < LL_on_Fig: 
     tmp = LL_on_Fig
     LL_on_Fig = UL_on_Fig
     UL_on_Fig = tmp
+print("UL_on_Fig: " + str(UL_on_Fig))
+print("LL_on_Fig: " + str(LL_on_Fig))
 
-
+# LUT
 LUT = config.get('Figure', 'LUT')
 LUT = LUT.replace("\"", "").replace("\'", "")
+print("LUT: " + LUT)
 
+# ValueName
 ValueName = config.get('Figure', 'ValueName')
 ValueName = ValueName.replace("\"", "").replace("\'", "")
+print("ValueName: " + ValueName)
 
+# Unit
 Unit = config.get('Figure', 'Unit')
 Unit = Unit.replace("\"", "").replace("\'", "")
+print("Unit: " + Unit)
 
+# 
 makeBarOrientationHorizontal = config.get('Figure', 'makeBarOrientationHorizontal')
 if makeBarOrientationHorizontal.lower() == "true": 
     makeBarOrientationHorizontal = True
 else: 
     makeBarOrientationHorizontal = False
+print("makeBarOrientationHorizontal: " + str(makeBarOrientationHorizontal) )
 
 
+# showPreview
 showPreview = config.get('Figure', 'showPreview')
 if showPreview.lower() == "true": 
     showPreview = True
 else: 
     showPreview = False
-
-SPECULAR = float( config.get('Figure', 'SPECULAR') )
-
-
-print("UL_on_Fig: " + str(UL_on_Fig))
-print("LL_on_Fig: " + str(LL_on_Fig))
-print("LUT: " + LUT)
-print("ValueName: " + ValueName)
-print("Unit: " + Unit)
-print("makeBarOrientationHorizontal: " + str(makeBarOrientationHorizontal) )
 print("showPreview: " + str(showPreview))
+
+# SPECULAR
+SPECULAR = float( config.get('Figure', 'SPECULAR') )
 print("SPECULAR: " + str(SPECULAR))
 
+# OUTPUT_FOLDER
+OUTPUT_FOLDER = config.get('Figure', 'OUTPUT_FOLDER')
+OUTPUT_FOLDER = OUTPUT_FOLDER.replace("\"", "").replace("\'", "")
+print("OUTPUT_FOLDER: " + OUTPUT_FOLDER)
+
+# OUTPUT_FILE_NAME_PREFIX
+OUTPUT_FILE_NAME_PREFIX = config.get('Figure', 'OUTPUT_FILE_NAME_PREFIX')
+OUTPUT_FILE_NAME_PREFIX = OUTPUT_FILE_NAME_PREFIX.replace("\"", "").replace("\'", "")
+print("OUTPUT_FILE_NAME_PREFIX: " + OUTPUT_FILE_NAME_PREFIX)
+
 # --------------------------------------------------------------
+
 
 # trace generated using paraview version 5.12.0-RC1
 #import paraview
@@ -101,36 +119,149 @@ paraview.simple._DisableFirstRenderCameraReset()
 # create a new 'Legacy VTK Reader'
 
 
-# 値なしVTKファイルをロード
-Folder_Roi_without_Val = "./vtk/without_val"
-ribbonvtk = None
-if Laterality == "L": 
-    ribbonvtk = LegacyVTKReader(registrationName='Lt_ribbon.vtk', FileNames=[Folder_Roi_without_Val + '/Lt_ribbon.vtk'])
-elif Laterality == "R": 
-    ribbonvtk = LegacyVTKReader(registrationName='Rt_ribbon.vtk', FileNames=[Folder_Roi_without_Val + '/Rt_ribbon.vtk'])
 
 
+
+#
 # 値ありVTKファイルをロードして生成したオブジェクトを配列に格納 
+#
 
 Folder_Roi_with_Val = "./vtk/with_val"
 
-
-import os
+load_taraget_vtk_file_names = []
 
 def get_file_names_with_extension(folder_path, target_extension):
     file_names = []
+    import os
     for filename in os.listdir(folder_path):
         if filename.endswith(target_extension):
             file_names.append(filename)
     return file_names
 
-vtk_file_names = get_file_names_with_extension(Folder_Roi_with_Val, ".vtk")
+#load_taraget_vtk_file_names = get_file_names_with_extension(Folder_Roi_with_Val, ".vtk") # 全てをロード
+
+def get_SurfaceAreaVtkFileNames(folder_path, lat):
+    file_names = []
+    import re    
+    import os
+    # For Surface Areas
+    for filename in os.listdir(folder_path):
+        #filename = "048_ctx-rh-middletemporal.vtk"
+        if lat == "L":
+            rgx_str = r'^[0-9]+.+(-lh-).+vtk$'
+        else: 
+            rgx_str = r'^[0-9]+.+(-rh-).+vtk$'
+
+        regex = re.compile(rgx_str)
+        so = regex.search(filename) # search()は最初のマッチング結果のみに対応するオブジェクトを生成
+        #print(so)  # マッチしなかったらNoneが返ってくる
+        if so != None:
+            file_names.append(filename)    
+    return file_names
 
 
+def get_SubcorticalAreaVtkFileNames(folder_path, lat):
+    file_names = []
+    import re    
+    import os
+    # For Subcortical Areas
+    for filename in os.listdir(folder_path):
+        #filename = "074_Left-Thalamus.vtk"
+        if lat == "L":
+            rgx_str = r'^[0-9]+.+(_Left-).+vtk$'
+        else: 
+            rgx_str = r'^[0-9]+.+(_Right-).+vtk$'
 
+        regex = re.compile(rgx_str)
+        so = regex.search(filename) # search()は最初のマッチング結果のみに対応するオブジェクトを生成
+        #print(so)  # マッチしなかったらNoneが返ってくる
+        if so != None:
+            file_names.append(filename)         
+    return file_names
+
+
+def get_CCVtkFileNames(folder_path, lat):
+    file_names = []
+    import re    
+    import os
+    # For CC
+    for filename in os.listdir(folder_path):
+        #filename = "069_CC_Posterior.vtk"
+        rgx_str = r'^[0-9]+.+(_CC_).+vtk$'
+        regex = re.compile(rgx_str)
+        so = regex.search(filename) # search()は最初のマッチング結果のみに対応するオブジェクトを生成
+        #print(so)  # マッチしなかったらNoneが返ってくる
+        if so != None:
+            file_names.append(filename)
+    return file_names
+
+
+def get_LatVentVtkFileNames(folder_path, lat):
+    file_names = []
+    import re    
+    import os
+    # For LatVent
+    for filename in os.listdir(folder_path):
+        #filename = "Lt_LatVent.vtk"
+        if lat == "L":
+            rgx_str = r'^Lt_LatVent\.vtk$'
+        else: 
+            rgx_str = r'^Rt_LatVent\.vtk$'
+    
+        regex = re.compile(rgx_str)
+        so = regex.search(filename) # search()は最初のマッチング結果のみに対応するオブジェクトを生成
+        #print(so)  # マッチしなかったらNoneが返ってくる
+        if so != None:
+            file_names.append(filename)
+    return file_names
+
+
+load_taraget_vtk_file_names = get_SurfaceAreaVtkFileNames(Folder_Roi_with_Val, Laterality) # 片脳のみロード
+load_taraget_vtk_file_names = load_taraget_vtk_file_names  +  get_SubcorticalAreaVtkFileNames(Folder_Roi_with_Val, Laterality) # 片脳のみロード
+load_taraget_vtk_file_names = load_taraget_vtk_file_names  +  get_CCVtkFileNames(Folder_Roi_with_Val, Laterality) # 片脳のみロード
+load_taraget_vtk_file_names = load_taraget_vtk_file_names  +  get_LatVentVtkFileNames(Folder_Roi_with_Val, Laterality) # 片脳のみロード
+
+
+# Load Target VTK Files
 Regions_with_Val = []
-for vtk_file_name in vtk_file_names:
+for vtk_file_name in load_taraget_vtk_file_names:
     Regions_with_Val.append( LegacyVTKReader(registrationName=vtk_file_name, FileNames=[Folder_Roi_with_Val + '/' + vtk_file_name]) )
+
+
+
+#
+# 値なしVTKファイルをロード
+#
+Folder_Roi_without_Val = "./vtk/without_val"
+
+ribbonvtk = None
+empty_ccvtk = None
+hippo_vtk = None
+amygdala_vtk = None
+
+shouldLoadEmptyCC = None
+if( len(get_SurfaceAreaVtkFileNames(Folder_Roi_with_Val, Laterality)) > 0 ): 
+    shouldLoadEmptyCC = True
+else: 
+    shouldLoadEmptyCC = False
+
+if Laterality == "L": 
+    ribbonvtk = LegacyVTKReader(registrationName='Lt_ribbon.vtk', FileNames=[Folder_Roi_without_Val + '/Lt_ribbon.vtk'])
+    if shouldLoadEmptyCC: 
+        empty_ccvtk = LegacyVTKReader(registrationName='Lt_Empty_CC.vtk', FileNames=[Folder_Roi_without_Val + '/Lt_Empty_CC.vtk'])
+        hippo_vtk = LegacyVTKReader(registrationName='086_Left-Hippocampus.vtk', FileNames=[Folder_Roi_without_Val + '/078_Left-Hippocampus.vtk'])
+        amygdala_vtk = LegacyVTKReader(registrationName='079_Left-Amygdala.vtk.vtk', FileNames=[Folder_Roi_without_Val + '/079_Left-Amygdala.vtk'])
+elif Laterality == "R": 
+    ribbonvtk = LegacyVTKReader(registrationName='Rt_ribbon.vtk', FileNames=[Folder_Roi_without_Val + '/Rt_ribbon.vtk'])
+    if shouldLoadEmptyCC: 
+        empty_ccvtk = LegacyVTKReader(registrationName='Rt_Empty_CC.vtk', FileNames=[Folder_Roi_without_Val + '/Rt_Empty_CC.vtk'])
+        hippo_vtk = LegacyVTKReader(registrationName='086_Right-Hippocampus.vtk', FileNames=[Folder_Roi_without_Val + '/086_Right-Hippocampus.vtk'])
+        amygdala_vtk = LegacyVTKReader(registrationName='087_Right-Amygdala.vtk', FileNames=[Folder_Roi_without_Val + '/087_Right-Amygdala.vtk'])
+        
+
+
+# -------------------------------------------------------------
+
 
 
 
@@ -141,8 +272,22 @@ SetActiveSource(ribbonvtk)
 renderView1 = GetActiveViewOrCreate('RenderView')
 
 # show data in view
-ribbonvtkDisplay = Show(ribbonvtk, renderView1, 'GeometryRepresentation')
 
+ribbonvtkDisplay = Show(ribbonvtk, renderView1, 'GeometryRepresentation')
+ribbonvtkDisplay.Opacity = 0.05 # 透明度の調整
+
+if not empty_ccvtk == None: 
+    empty_ccvtkDisplay = Show(empty_ccvtk, renderView1, 'GeometryRepresentation')
+    empty_ccvtkDisplay.Opacity = 0.8
+
+if not hippo_vtk == None: 
+    hippo_vtkDisplay = Show(hippo_vtk, renderView1, 'GeometryRepresentation')
+    hippo_vtkDisplay.Opacity = 0.8
+    
+if not amygdala_vtk == None: 
+    amygdala_vtkDisplay = Show(amygdala_vtk, renderView1, 'GeometryRepresentation')
+    amygdala_vtkDisplay.Opacity = 0.8
+    
 # trace defaults for the display properties.
 ribbonvtkDisplay.Representation = 'Surface'
 
@@ -160,15 +305,6 @@ renderView1.ResetCamera(False, 0.9)
 
 # trace defaults for the display properties.
 #rt_ribbonvtkDisplay.Representation = 'Surface'
-
-
-
-#
-# 透明度の調整
-#
-# Properties modified on rt_ribbonvtkDisplay
-ribbonvtkDisplay.Opacity = 0.05
-#rt_ribbonvtkDisplay.Opacity = 0.05
 
 
 
@@ -405,7 +541,7 @@ renderView1.EnableRayTracing = 0 #影なし（滑らかさなし、ぼかし感�
 
 
 import os
-os.makedirs("./png", exist_ok=True)
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 
 
@@ -444,7 +580,8 @@ Interact()
 #
 ## Save a screenshot of the active view
 
-output_file_path = "./png/" + ValueName.replace(" ", "_") + "_" + Laterality + "_" + View + ".png"
+output_file_path = OUTPUT_FOLDER + "/" + OUTPUT_FILE_NAME_PREFIX + "_" + ValueName.replace(" ", "_") + "_" + Laterality + "_" + View + ".png"
+
 SaveScreenshot(output_file_path)
 print(output_file_path + " was generated.")
 

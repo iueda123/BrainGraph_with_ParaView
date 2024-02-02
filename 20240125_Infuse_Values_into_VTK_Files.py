@@ -16,7 +16,7 @@ config = configparser.ConfigParser()
 config.read('./config.ini', encoding='utf-8')
 
 # セクションとオプションから値を取得
-value_table_file_name = config.get('ForDebug', 'value_table_file_name')
+value_table_file = config.get('ForDebug', 'value_table_file')
 #value_type = config.get('ForDebug', 'value_type')
 value_range_ul_on_value_table = float( config.get('ForDebug', 'value_range_ul_on_value_table') )
 value_range_ll_on_value_table = float( config.get('ForDebug', 'value_range_ll_on_value_table') )
@@ -27,7 +27,7 @@ if value_range_ul_on_value_table < value_range_ll_on_value_table:
 #value_range_ul_on_vtk_file = float( config.get('ForDebug', 'value_range_ul_on_vtk_file') )
 #value_range_ll_on_vtk_file = float( config.get('ForDebug', 'value_range_ll_on_vtk_file') )
 
-print("value_table_file_name: " + value_table_file_name)
+print("value_table_file: " + value_table_file)
 #print("value_type: " + value_type)
 print("value_range_ul_on_value_table: " + str(value_range_ul_on_value_table))
 print("value_range_ll_on_value_table: " + str(value_range_ll_on_value_table))
@@ -37,13 +37,13 @@ print("value_range_ll_on_value_table: " + str(value_range_ll_on_value_table))
 
 # ## Load Tables
 
-# In[3]:
+# In[2]:
 
 
 import pandas as pd
 
 
-# In[4]:
+# In[3]:
 
 
 #
@@ -53,13 +53,11 @@ import pandas as pd
 #    VALUE: 各オブジェクトに与えたい値
 #
 
-value_table_file = "./ValueTables/" + value_table_file_name
-
 df_value_table = pd.read_csv(value_table_file, header=None, names=['OBJECT_LABEL', 'VALUE'], sep="\t")
 print(df_value_table)
 
 
-# In[5]:
+# In[4]:
 
 
 #
@@ -75,7 +73,7 @@ print(df_file_table)
 
 # ## Define Functions
 
-# In[6]:
+# In[5]:
 
 
 #
@@ -285,7 +283,7 @@ def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_
 #    val_on_table=10, verbose=True)
 
 
-# In[7]:
+# In[6]:
 
 
 #df_value_file_table = pd.merge(df_file_table, df_value_table, on="OBJECT_LABEL", how="left") #file_tableにあるもの
@@ -294,7 +292,7 @@ df_value_file_table = pd.merge(df_file_table, df_value_table, on="OBJECT_LABEL",
 df_value_file_table
 
 
-# In[8]:
+# In[7]:
 
 
 #
@@ -318,12 +316,4 @@ for r in range(0, len(df_value_file_table)):
         input_roi_vtk_file_path=src_vtk_folder + "/" + dest_vtk_file, 
         output_destination=dest_vtk_folder, 
         val_on_table=obj_val, verbose=False)
-
-
-# In[9]:
-
-
-import statistics
-vals = [0.635014, 0.378098, 0.673646, -0.334825, -0.663357, -0.669215, -0.353256, -0.722283, -0.594573]
-statistics.stdev(vals)
 

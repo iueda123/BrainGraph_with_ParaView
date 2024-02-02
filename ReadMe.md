@@ -2,6 +2,7 @@ ParaViewを使った三次元脳グラフの生成方法
 
 この方法を使えば、非常に自由度の高い三次元脳グラフが作れるはず。
 
+![Visualize_SCSs_with_ParaView.png](./png/Visualize_SCSs_with_ParaView.png)
 
 ## これはなにか？実現したいことの概要
 
@@ -136,16 +137,16 @@ iu@iu-pu:~/Dropbox/__JNFiles__/HowTo_52_BrainVisualization_with_VTK$ pvpython ./
 
 ![TraceSetting](./png/TraceSetting.png)
 
+
 Tools > Start Trace
 
-✓ Fully Trace Supplemental Procies
-
-✓ Show Incremantal Trace
+  * ✓ Fully Trace Supplemental Procies
+  * ✓ Show Incremantal Trace
 
 がおすすめ。
 
 
-Wireframe, Line Width 3, Render Lines As Tubes ON が良さそうだ。
+Wireframe, Line Width 3, Render Lines As Tubes ON が良さそうだ。Lightを設定しなくても明るく表示される。
 
 
 
