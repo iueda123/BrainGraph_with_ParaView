@@ -13,29 +13,55 @@
 # --------------------------------------------------------------
 
 # Main Settings from args
+#
+# arg 1: Laterality. "R" or "L".
+# arg 2: View. "Lat" or "Med".
+# arg 3: Orientation of ColorBar. "vertical" "horizontal", or "none".
+# art 4: showPreview. "true" or "false". 
 
 import sys
 args = sys.argv
 #print(len(args))
-if len(args) == 4:
+if len(args) == 5:
+    
     Laterality = args[1]
+    
     View = args[2]
-    if args[3].lower() == "true": 
+    
+    # Orientation of ColorBar
+    orientation_of_color_bar = args[3].lower()
+    if orientation_of_color_bar == "vertical": 
         displayColorBarAndLegend = True
-    else: 
+        makeBarOrientationHorizontal = False
+    elif orientation_of_color_bar == "horizontal": 
+        displayColorBarAndLegend = True
+        makeBarOrientationHorizontal = True
+    elif orientation_of_color_bar == "none": 
         displayColorBarAndLegend = False
+        makeBarOrientationHorizontal = True
+    else: 
+        import sys
+        sys.stderr.write('Error occurred! Plese specify \"vertical\", \"horizontal\", or \"none\" for ColorBarOrientation.')
+        sys.exit(1)
+
+    # showPreview
+    if args[4].lower() == "true": 
+        showPreview = True
+    else: 
+        showPreview = False
+        
 else: 
     Laterality = "L"
-    #Laterality = "R"
-    #View = "Med"
     View = "Lat"
     displayColorBarAndLegend = True
-    #displayColorBarAndLegend = False
+    makeBarOrientationHorizontal = True   
+    showPreview = True
 
 print("Laterality: " + Laterality)
 print("View: " + View)
 print("displayColorBarAndLegend: " + str(displayColorBarAndLegend))
-
+print("makeBarOrientationHorizontal: " + str(makeBarOrientationHorizontal) )
+print("showPreview: " + str(showPreview))
 
 # --------------------------------------------------------------
 #
@@ -72,36 +98,22 @@ Unit = config.get('Figure', 'Unit')
 Unit = Unit.replace("\"", "").replace("\'", "")
 print("Unit: " + Unit)
 
-# 
-makeBarOrientationHorizontal = config.get('Figure', 'makeBarOrientationHorizontal')
-if makeBarOrientationHorizontal.lower() == "true": 
-    makeBarOrientationHorizontal = True
-else: 
-    makeBarOrientationHorizontal = False
-print("makeBarOrientationHorizontal: " + str(makeBarOrientationHorizontal) )
-
-
-# showPreview
-showPreview = config.get('Figure', 'showPreview')
-if showPreview.lower() == "true": 
-    showPreview = True
-else: 
-    showPreview = False
-print("showPreview: " + str(showPreview))
 
 # SPECULAR
 SPECULAR = float( config.get('Figure', 'SPECULAR') )
 print("SPECULAR: " + str(SPECULAR))
 
 # OUTPUT_FOLDER
-OUTPUT_FOLDER = config.get('Figure', 'OUTPUT_FOLDER')
+OUTPUT_FOLDER = config.get('Figure', 'output_folder')
 OUTPUT_FOLDER = OUTPUT_FOLDER.replace("\"", "").replace("\'", "")
 print("OUTPUT_FOLDER: " + OUTPUT_FOLDER)
 
 # OUTPUT_FILE_NAME_PREFIX
-OUTPUT_FILE_NAME_PREFIX = config.get('Figure', 'OUTPUT_FILE_NAME_PREFIX')
-OUTPUT_FILE_NAME_PREFIX = OUTPUT_FILE_NAME_PREFIX.replace("\"", "").replace("\'", "")
+value_table_file = config.get('Value', 'value_table_file')
+import pathlib
+OUTPUT_FILE_NAME_PREFIX = pathlib.Path(value_table_file).stem
 print("OUTPUT_FILE_NAME_PREFIX: " + OUTPUT_FILE_NAME_PREFIX)
+
 
 # --------------------------------------------------------------
 
@@ -324,7 +336,10 @@ for REGION in Regions_with_Val:
     #REGION.Representation = 'Surface'
 
     # set scalar coloring
-    ColorBy(REGION, ('POINTS', 'normals', 'X'))
+    #ColorBy(REGION, ('POINTS', 'normals', 'X'))
+    #ColorBy(REGION, ('POINTS', 'normals', 'Y'))
+    ColorBy(REGION, ('POINTS', 'normals', 'Z'))
+    #ColorBy(REGION, ('POINTS', 'normals', 'Magnitude'))
 
     # rescale color and/or opacity maps used to include current data range
     #REGION.RescaleTransferFunctionToDataRange(True, False)
@@ -469,7 +484,8 @@ if Laterality == "L":
         renderView1.CameraPosition = [-467, -18, 15.5]
         renderView1.CameraFocalPoint = [-34, -18, 15.5]
         renderView1.CameraViewUp = [0.0, 0.0, 1.0]
-        renderView1.CameraViewAngle = 24  # 拡大率？
+        #renderView1.CameraViewAngle = 24  # 拡大率？
+        renderView1.CameraViewAngle = 21  # 拡大率？
     else: 
         ## For Med (真横から)
         #renderView1.CameraPosition = [400, -18, 15.5]
@@ -480,7 +496,8 @@ if Laterality == "L":
         renderView1.CameraPosition = [373, -18, -133]
         renderView1.CameraFocalPoint = [-34, -18, 15.5]
         renderView1.CameraViewUp = [0.34, 0.0, 0.94]
-        renderView1.CameraViewAngle = 26  # 拡大率？
+        #renderView1.CameraViewAngle = 26  # 拡大率？
+        renderView1.CameraViewAngle = 23  # 拡大率？
         
 elif Laterality == "R": 
     if View == "Lat": 
@@ -488,7 +505,8 @@ elif Laterality == "R":
         renderView1.CameraPosition = [470, -17, 15.5]
         renderView1.CameraFocalPoint = [-36, -17, 15.5]
         renderView1.CameraViewUp = [0.0, 0.0, 1.0]
-        renderView1.CameraViewAngle = 24  # 拡大率？
+        #renderView1.CameraViewAngle = 24  # 拡大率？
+        renderView1.CameraViewAngle = 21  # 拡大率？
 
     else: 
         # For Med (真横から)
@@ -500,7 +518,8 @@ elif Laterality == "R":
         renderView1.CameraPosition = [-394, -15, -58]
         renderView1.CameraFocalPoint = [33, -15, 17]
         renderView1.CameraViewUp = [-0.17, 0.0, 0.98]
-        renderView1.CameraViewAngle = 26  # 拡大率？
+        #renderView1.CameraViewAngle = 26  # 拡大率？
+        renderView1.CameraViewAngle = 23  # 拡大率？
 
 
 #
@@ -576,11 +595,17 @@ layout1.SetSize(938, 781)
 RenderAllViews()
 #
 ## Interact with the view, usefull when running from pvpython
-Interact()
+
+if showPreview: 
+    Interact()
+
+
 #
 ## Save a screenshot of the active view
 
-output_file_path = OUTPUT_FOLDER + "/" + OUTPUT_FILE_NAME_PREFIX + "_" + ValueName.replace(" ", "_") + "_" + Laterality + "_" + View + ".png"
+
+
+output_file_path = OUTPUT_FOLDER + "/" + OUTPUT_FILE_NAME_PREFIX + "_" + ValueName.replace(" ", "") + "_" + Laterality + "_" + View + ".png"
 
 SaveScreenshot(output_file_path)
 print(output_file_path + " was generated.")

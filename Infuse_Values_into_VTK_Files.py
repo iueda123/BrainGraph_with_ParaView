@@ -1,90 +1,75 @@
 #!/usr/bin/env python
+# coding: utf-8
 
-#import sys
-#args = sys.argv
-#print("arg1: " + args[1])
+# <h1>Table of Contents<span class="tocSkip"></span></h1>
+# <div class="toc"><ul class="toc-item"><li><span><a href="#Load-Settings" data-toc-modified-id="Load-Settings-1"><span class="toc-item-num">1&nbsp;&nbsp;</span>Load Settings</a></span></li><li><span><a href="#Load-Tables" data-toc-modified-id="Load-Tables-2"><span class="toc-item-num">2&nbsp;&nbsp;</span>Load Tables</a></span></li><li><span><a href="#Define-Functions" data-toc-modified-id="Define-Functions-3"><span class="toc-item-num">3&nbsp;&nbsp;</span>Define Functions</a></span></li></ul></div>
 
-# ------------------------
+# ## Load Settings
+
+# In[1]:
+
+
+import configparser
+# ConfigParserオブジェクトを作成
+config = configparser.ConfigParser()
+# ファイルを読み込む
+config.read('./config.ini', encoding='utf-8')
+
+# セクションとオプションから値を取得
+value_table_file = config.get('Value', 'value_table_file')
+#value_type = config.get('ForDebug', 'value_type')
+value_range_ul_on_figure = float( config.get('Figure', 'value_range_ul_on_figure') )
+value_range_ll_on_figure = float( config.get('Figure', 'value_range_ll_on_figure') )
+if value_range_ul_on_figure < value_range_ll_on_figure: 
+    tmp = value_range_ll_on_figure
+    value_range_ll_on_figure = value_range_ul_on_figure
+    value_range_ul_on_figure = tmp
+
+print("value_table_file: " + value_table_file)
+#print("value_type: " + value_type)
+print("value_range_ul_on_figure: " + str(value_range_ul_on_figure))
+print("value_range_ll_on_figure: " + str(value_range_ll_on_figure))
+
+
+# ## Load Tables
+
+# In[2]:
 
 
 import pandas as pd
 
 
-# ------------------------
+# In[3]:
 
 
 #
-# Load VTK File Tbale
+# Load "OBJECT_LABEL-VALUE" Tbale
 #
-vtkfile_table_file = "./LabelTables/Label_File_Table.tsv"
-df_file_table = pd.read_csv(vtkfile_table_file, header=None, names=['OBJECT_LABEL', 'VTK_FILE'], sep="\t")
-#print(df_file_table)
-
-
-# ------------------------
-
-
+#    OBJECT_LABEL: VtkfileTableと橋渡しするためのラベル
+#    VALUE: 各オブジェクトに与えたい値
 #
-# Load Value Tbale
-#
-#value_table_file = "./ValueTables/DKSurf_DivergingValues_68.tsv"
-#value_table_file = "./ValueTables/DKSurf_DivergingValues_L35.tsv"
-value_table_file = "./ValueTables/ScRLV_DivergingValues_L7.tsv"
-#value_table_file = "./ValueTables/DKSurf_QualitativeValues_68.tsv"
-#value_table_file = "./ValueTables/DKSurf_SequentialValues_68.tsv"
-#value_table_file = "./ValueTables/ScRLV_DivergingValues_16.tsv"
-#value_table_file = "./ValueTables/ScRLV_QualitativeValues_16.tsv"
-#value_table_file = "./ValueTables/ScRLV_SequentialValues_16.tsv"
 
 df_value_table = pd.read_csv(value_table_file, header=None, names=['OBJECT_LABEL', 'VALUE'], sep="\t")
 print(df_value_table)
 
 
-# ------------------------
+# In[4]:
 
 
 #
-# Range Setting
+# Load "OBJECT_LABEL-VTKFILE" Table
 #
-
-# Sequential Values
-# 0〜+100
-# 0〜+1
-# 0〜+X
+#     OBJECT_LABEL: ValueTableと橋渡しするためのラベル
+#     VTK_FILE: ./vtk/without_val 下に存在するファイル
 #
-# Diverging Values
-# -1〜+1
-# -100〜+100
-# -X〜+X
-
-# Qualitative Values
-# 1, 2, 3, 4, ....
-# 1, 3, 5, 7, .... 
-# A, Y, Q, ...
-
-isDiverging=True
-
-isSequential=False
-
-value_range_ul_on_table = 1
-value_range_ll_on_table = -1
-
-#value_range_ul_on_table = 1
-#value_range_ll_on_table = 0
-
-value_range_ul_on_vtkfile = 50
-value_range_ll_on_vtkfile = -50
-
-#vlue_range_ul_on_vtkfile = 1
-#value_range_ll_on_vtkfile = -1
-
-#value_range_ul_on_vtkfile = 100
-#value_range_ll_on_vtkfile = 0
+vtkfile_table_file = "./VtkfileTable.tsv"
+df_file_table = pd.read_csv(vtkfile_table_file, header=0, names=['OBJECT_LABEL', 'VTK_FILE'], sep="\t")
+print(df_file_table)
 
 
 # ## Define Functions
 
-# ------------------------
+# In[5]:
 
 
 #
@@ -162,6 +147,7 @@ def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_
     #
     new_data_lines = [] 
     print("Now processing the line ", end="")
+    infused_values = []
     for line_num in range( start_line_num_of_data, len(lines)): 
         print( str(line_num) + ". ", end="")
         line_editing = lines[line_num]
@@ -175,38 +161,60 @@ def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_
         new_values = []
         
         #############################################
-        
+        # Sequential Values
+        # e.g.: 0〜+100; 0〜+1; 0〜+X
+        #
+        # Diverging Values
+        # e.g.: -1〜+1; -100〜+100; -X〜+X
 
+        # Qualitative Values
+        # e.g.: 1, 2, 3, 4, ...; 1, 3, 5, 7, ...; A, Y, Q, ...
+        if value_range_ul_on_figure > 0 and value_range_ll_on_figure < 0:
+            value_type = "DIVERGING"
+        else:
+            value_type = "SEQUENTIAL"
         
+        if value_type == "DIVERGING": 
+            base_range_on_figure = value_range_ul_on_figure - 0
+            fluctuation_factor = base_range_on_figure / 5
+            for value in values: 
+                new_value =  val_on_table + value * fluctuation_factor
+                new_values.append( new_value )
+        elif value_type == "SEQUENTIAL": 
+            base_range_on_figure = (value_range_ul_on_figure - value_range_ll_on_figure)
+            fluctuation_factor = base_range_on_figure / 5
+            for value in values: 
+                new_value =  val_on_table  + ( value * fluctuation_factor)
+                new_values.append( new_value )
+        elif value_type == "QUALITAIVE": 
+            print("Error. Not yet coded.")
+            import sys; sys.exit()
+        else: 
+            print("Error. Please check 'value_type'.")
+            import sys; sys.exit()
         
-        if isDiverging: 
-            scale_factor_1 = (value_range_ul_on_table - 0)
-            scale_factor_2 = (value_range_ul_on_vtkfile - 0)
-        
-        if isSequential:
-            scale_factor_1 = (value_range_ul_on_table - value_range_ll_on_table)
-            scale_factor_2 = value_range_ul_on_vtkfile - value_range_ll_on_vtkfile
-        
-        for value in values: 
-            new_value = ( value / (100/scale_factor_1) ) + ( (val_on_table/scale_factor_1) * scale_factor_2 )
-            #new_value = value + ( (val_on_table/scale_factor_1) * scale_factor_2 )
-            #new_value = ( value + (val_on_table/scale_factor_1)) * scale_factor_2
-            #new_value = value + val_on_table * 100
-            #new_values.append( value + val_on_table )
-            #new_values.append( new_value ) # -100 〜 +100
-            #new_values.append( new_value / 100 ) # -1 〜 +1
-            new_values.append( new_value )
-
+        #
+        # For Infused Value Check
+        #
+        #print(new_values)
+        #if len(new_values) > 1:
+        #    import statistics
+        #    print(str(statistics.mean(new_values)) + "±" + (str(statistics.stdev(new_values))) )
+        for new_value in new_values: 
+            infused_values.append(new_value)
             
         #############################################
         
-        new_values = [str(i) for i in new_values]
-        #new_values = new_values.append(" ")
-        #new_values = new_values.append("\n")
-        new_values = ' '.join(new_values)
-        new_values = new_values + " \n"
-        #print(new_values)
-        new_data_lines.append(new_values)
+        new_values_str = [str(i) for i in new_values]
+        #new_values_str = new_values_str.append(" ")
+        #new_values_str = new_values_str.append("\n")
+        new_values_str = ' '.join(new_values_str)
+        new_values_str = new_values_str + " \n"
+        #print(new_values_str)
+        new_data_lines.append(new_values_str)
+        
+
+        
     print("...done.")
     
     if verbose == True:
@@ -243,7 +251,12 @@ def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_
     with open(ouput_file_path, mode='w') as f:
         f.writelines(new_lines)
     
-    print("'" + ouput_file_path + "' was generated. (Infused Value: " + str(val_on_table) + ")" )
+    
+    import statistics
+    infused_value_stats = str(statistics.mean(infused_values)) + "±" + (str(statistics.stdev(infused_values)))
+    
+    
+    print("'" + ouput_file_path + "' was generated. (Infused Value: " + infused_value_stats + ")" )
     print("--------------------------------------------------------------------------------------")
     print()
     
@@ -254,7 +267,7 @@ def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_
 #    val_on_table=10, verbose=True)
 
 
-# ------------------------
+# In[6]:
 
 
 #df_value_file_table = pd.merge(df_file_table, df_value_table, on="OBJECT_LABEL", how="left") #file_tableにあるもの
@@ -263,12 +276,12 @@ df_value_file_table = pd.merge(df_file_table, df_value_table, on="OBJECT_LABEL",
 df_value_file_table
 
 
-# ------------------------
+# In[7]:
 
 
 #
-# 脳領域に値を流し込む
-#
+# Infuse Values into Vtk Files
+# 
 src_vtk_folder = "./vtk/without_val"
 dest_vtk_folder = "./vtk/with_val"
 
@@ -287,12 +300,4 @@ for r in range(0, len(df_value_file_table)):
         input_roi_vtk_file_path=src_vtk_folder + "/" + dest_vtk_file, 
         output_destination=dest_vtk_folder, 
         val_on_table=obj_val, verbose=False)
-
-
-# In[ ]:
-
-
-#
-# Join PNGs
-#
 
