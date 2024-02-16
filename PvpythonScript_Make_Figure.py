@@ -425,14 +425,19 @@ normalsLUTColorBar.LabelColor = [0.0, 0.0, 0.0]
 
 # 文字を入れる
 normalsLUTColorBar.Title = ValueName # タイトル
-normalsLUTColorBar.ComponentTitle = '[' + Unit + ']' # 単位 
+
+
+if Unit != "": 
+    normalsLUTColorBar.ComponentTitle = '[' + Unit + ']' # 単位あり 
+else: 
+    normalsLUTColorBar.ComponentTitle = '' # 単位なし
     
 # 最大値、最小値の表示
 # normalsLUTColorBar.DrawDataRange = 1
 
 
 # 
-# バーの方向
+# ColorBarの方向（水平と垂直でサイズ感も変える）
 # 
 if makeBarOrientationHorizontal == True: 
     # 水平
@@ -441,6 +446,10 @@ if makeBarOrientationHorizontal == True:
     normalsLUTColorBar.Orientation = 'Horizontal' # バー水平
     normalsLUTColorBar.HorizontalTitle = 1 # 文字列水平
     normalsLUTColorBar.TextPosition = 'Ticks right/top, annotations left/bottom' # テキスト位置を右や上
+    normalsLUTColorBar.ScalarBarThickness = 24 #ColorBarの太さ
+    normalsLUTColorBar.ScalarBarLength = 0.90 #ColorBarの長さ
+    normalsLUTColorBar.TitleFontSize = 18 #タイトルフォントサイズ
+    normalsLUTColorBar.LabelFontSize = 18 #ラベルフォントサイズ
 else: 
      # 垂直
     normalsLUTColorBar.WindowLocation = 'Lower Right Corner'
@@ -448,6 +457,15 @@ else:
     normalsLUTColorBar.Orientation = 'Vertical' # バー垂直
     normalsLUTColorBar.HorizontalTitle = 0 # 文字列垂直
     normalsLUTColorBar.TextPosition = 'Ticks left/bottom, annotations right/top' # テキスト位置を左や下
+    #normalsLUTColorBar.TextPosition = 'Ticks right/top, annotations left/bottom' # テキスト位置を右や上
+    #normalsLUTColorBar.HorizontalTitle = 1 # タイトルを横書き
+    normalsLUTColorBar.ScalarBarThickness = 36 #ColorBarの太さ
+    normalsLUTColorBar.ScalarBarLength = 0.28 #ColorBarの長さ
+    normalsLUTColorBar.TitleFontSize = 16 #タイトルフォントサイズ
+    normalsLUTColorBar.LabelFontSize = 16 #ラベルフォントサイズ
+
+
+
 
 
 #
