@@ -1,10 +1,78 @@
-ParaViewを使った三次元脳グラフの生成方法
+# BrainGraph with ParaView 
 
-この方法を使えば、非常に自由度の高い三次元脳グラフが作れるはず。
+これはParaViewを利用して、脳の三次元グラフを生成するためのスクリプト集です。
 
-![Visualize_SCSs_with_ParaView.png](./png/Visualize_SCSs_with_ParaView.png)
+![Alt text](./png/ImpactOfNeuroimagingPhenotypesOnBrainAgeEstimation_SA_16to66_RegressionCoefficient.png)
+![Alt text](./png/ImpactOfNeuroimagingPhenotypesOnBrainAgeEstimation_OT_16to66_RegressionCoefficient.png) 
 
-## これはなにか？実現したいことの概要
+以下のような3ステップで、上記のようなグラフを比較的簡単に作成できます。
+
+**Step 1: 領域名と値を対にしたテキストファイル(tsv)をValueTableフォルダ内に置く。**
+
+**Step 2: config.ini ファイルで tsvファイルの所在、値範囲、出力先等を指定する。**
+
+**Step 3: generate_horizontally.sh または generate_verticall.sh を走らせる。**
+
+なお、このスクリプト集で使われている方法を応用すれば、より細かな脳アトラスに対応した自由度の高い三次元脳グラフが作れるはずです。
+
+-------- 
+
+## ファイル・フォルダの説明と主要スクリプトファイルの使い方
+
+### ValueTables/  
+
+このフォルダ内には脳領域と値が対になって示されたtsvファイルを置く。脳領域はVtkFileTable.tsvで定義されている所定の名前で示す必要がある。脳領域の右隣に値を記述する。脳領域名と値の間にはタブを入れること。
+
+### itksnap_workspaces/
+
+### png/
+
+### vtk/
+
+###  *.ipynb
+
+開発用
+
+### VtkFileTable.tsv
+
+tsvファイルとvtkファイルとの橋渡しをするファイル。
+
+脳領域名とvtkファイルの対応関係が書かれている。
+
+現時点で対応している全ての脳領域が書かれている。
+
+### Infuse_Values_into_VTK_Files.py
+
+Infuse_Values_into_VTK_Files.ipynb を py に変換したもの。
+
+vtkに値を流し込み値を保持したVTKファイル達を生成するスクリプト
+
+### PvpythonScript_Make_Figure.py
+
+ParaViewの操作レコード機能を使いながら作ったsスクリプト。
+
+値を保持VTK達を読込みPNGを生成するスクリプト。
+
+### MergePngHorizontally.py, MergePngVertically.py
+
+MergePngHorizontally.ipynb, MergePngVertically.ipynb をpythonへ変換したもの。
+
+４つの画像（右大脳半球外側画像、右大脳半球内側画像、左大脳半球内側画像、左大脳半球外側画像）を水平または垂直方向に結合するためのスクリプト。
+
+LabelTables
+
+
+1. ValueTablesに領域
+
+--------
+
+### 対応しているLUTs
+
+![LUTs](./png/LUTs_2.png)
+
+--------
+
+## 思い立った経緯と開発ノート
 
 Python等のスクリプト言語を使って、脳の深部構造を可視化する方法を調べているうちに、
 ITK-SNAPがROI（Segmentation）のSurface MeshをVTKというファイル形式で出力できること、
@@ -26,26 +94,6 @@ ITK-SNAP上でどのようにしたら任意の値を格納したVTKファイル
 Step 3 は、ParaViewで「Tools -> Start Trace」でできる。何度もVTKファイルを読込み、描画操作の要点を掴み、それらをスクリプト化する。
 
 Step 4ではpvpythonコマンドを使ってStep 3を経て得たpythonスクリプトを走らせる。
-
-
--------- 
-
-
-## ファイル・フォルダの説明と主要スクリプトファイルの使い方
-
-  * ValueTables: 
-  * 
-  * Infuse_Values_into_VTK_Files.py: VTKに値を流し込み値を保持したVTKファイル達を生成するスクリプト
-  * PvpythonScript_Make_Figure.py: 値を保持VTK達を読込みPNGを生成するスクリプト。
-  * 
-
-
-LabelTables
-
-
-1. ValueTablesに領域
-
-
 
 --------
 
@@ -104,6 +152,8 @@ ParaView-5.12.0-RC1-MPI-Linux-Python3.10-x86_64.tar.gz
     # pvpython
     sudo ln -s /opt/ParaView-5.12.0-RC1-MPI-Linux-Python3.10-x86_64/bin/pvpython /usr/local/bin
 
+![Visualize_SCSs_with_ParaView.png](./png/Visualize_SCSs_with_ParaView.png)
+
 
 ### MRtrix3、FSL等
 
@@ -148,7 +198,3 @@ Tools > Start Trace
 
 Wireframe, Line Width 3, Render Lines As Tubes ON が良さそうだ。Lightを設定しなくても明るく表示される。
 
-
-
-
-![LUTs](./png/LUTs.png)
