@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# <h1>Table of Contents<span class="tocSkip"></span></h1>
+# <div class="toc"><ul class="toc-item"><li><span><a href="#MergePngHorizontally.py" data-toc-modified-id="MergePngHorizontally.py-1"><span class="toc-item-num">1&nbsp;&nbsp;</span>MergePngHorizontally.py</a></span></li><li><span><a href="#MergePngVertically.py" data-toc-modified-id="MergePngVertically.py-2"><span class="toc-item-num">2&nbsp;&nbsp;</span>MergePngVertically.py</a></span></li></ul></div>
+
+# ## MergePngVertically.py
+
+# In[22]:
+
+
 #
 # MergePngVertically
 #
@@ -34,18 +45,18 @@ config = configparser.ConfigParser()
 config.read('./config.ini', encoding='utf-8')
 
 # OUTPUT_FILE_NAME_PREFIX
-value_table_file = config.get('Value', 'value_table_file')
+value_table_file = config.get('Settings', 'value_table_file')
 import pathlib
 OUTPUT_FILE_NAME_PREFIX = pathlib.Path(value_table_file).stem
 print("OUTPUT_FILE_NAME_PREFIX: " + OUTPUT_FILE_NAME_PREFIX)
 
 # ValueName
-ValueName = config.get('Figure', 'ValueName')
+ValueName = config.get('Settings', 'ValueName')
 ValueName = ValueName.replace("\"", "").replace("\'", "")
 print("ValueName: " + ValueName)
 
 # OUTPUT_FOLDER
-OUTPUT_FOLDER = config.get('Figure', 'output_folder')
+OUTPUT_FOLDER = config.get('Settings', 'output_folder')
 OUTPUT_FOLDER = OUTPUT_FOLDER.replace("\"", "").replace("\'", "")
 print("OUTPUT_FOLDER: " + OUTPUT_FOLDER)
 

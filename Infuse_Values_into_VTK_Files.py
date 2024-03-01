@@ -16,10 +16,10 @@ config = configparser.ConfigParser()
 config.read('./config.ini', encoding='utf-8')
 
 # セクションとオプションから値を取得
-value_table_file = config.get('Value', 'value_table_file')
+value_table_file = config.get('Settings', 'value_table_file')
 #value_type = config.get('ForDebug', 'value_type')
-value_range_ul_on_figure = float( config.get('Figure', 'value_range_ul_on_figure') )
-value_range_ll_on_figure = float( config.get('Figure', 'value_range_ll_on_figure') )
+value_range_ul_on_figure = float( config.get('Settings', 'value_range_ul_on_figure') )
+value_range_ll_on_figure = float( config.get('Settings', 'value_range_ll_on_figure') )
 if value_range_ul_on_figure < value_range_ll_on_figure: 
     tmp = value_range_ll_on_figure
     value_range_ll_on_figure = value_range_ul_on_figure

@@ -74,8 +74,8 @@ config = configparser.ConfigParser()
 config.read('./config.ini', encoding='utf-8')
 
 # UL_on_Fig, LL_on_Fig
-UL_on_Fig = float( config.get('Figure', 'value_range_ul_on_figure') )
-LL_on_Fig = float( config.get('Figure', 'value_range_ll_on_figure') )
+UL_on_Fig = float( config.get('Settings', 'value_range_ul_on_figure') )
+LL_on_Fig = float( config.get('Settings', 'value_range_ll_on_figure') )
 if UL_on_Fig < LL_on_Fig: 
     tmp = LL_on_Fig
     LL_on_Fig = UL_on_Fig
@@ -84,32 +84,32 @@ print("UL_on_Fig: " + str(UL_on_Fig))
 print("LL_on_Fig: " + str(LL_on_Fig))
 
 # LUT
-LUT = config.get('Figure', 'LUT')
+LUT = config.get('Settings', 'LUT')
 LUT = LUT.replace("\"", "").replace("\'", "")
 print("LUT: " + LUT)
 
 # ValueName
-ValueName = config.get('Figure', 'ValueName')
+ValueName = config.get('Settings', 'ValueName')
 ValueName = ValueName.replace("\"", "").replace("\'", "")
 print("ValueName: " + ValueName)
 
 # Unit
-Unit = config.get('Figure', 'Unit')
+Unit = config.get('Settings', 'Unit')
 Unit = Unit.replace("\"", "").replace("\'", "")
 print("Unit: " + Unit)
 
 
 # SPECULAR
-SPECULAR = float( config.get('Figure', 'SPECULAR') )
+SPECULAR = float( config.get('Settings', 'SPECULAR') )
 print("SPECULAR: " + str(SPECULAR))
 
 # OUTPUT_FOLDER
-OUTPUT_FOLDER = config.get('Figure', 'output_folder')
+OUTPUT_FOLDER = config.get('Settings', 'output_folder')
 OUTPUT_FOLDER = OUTPUT_FOLDER.replace("\"", "").replace("\'", "")
 print("OUTPUT_FOLDER: " + OUTPUT_FOLDER)
 
 # OUTPUT_FILE_NAME_PREFIX
-value_table_file = config.get('Value', 'value_table_file')
+value_table_file = config.get('Settings', 'value_table_file')
 import pathlib
 OUTPUT_FILE_NAME_PREFIX = pathlib.Path(value_table_file).stem
 print("OUTPUT_FILE_NAME_PREFIX: " + OUTPUT_FILE_NAME_PREFIX)
@@ -448,8 +448,8 @@ if makeBarOrientationHorizontal == True:
     normalsLUTColorBar.TextPosition = 'Ticks right/top, annotations left/bottom' # テキスト位置を右や上
     normalsLUTColorBar.ScalarBarThickness = 24 #ColorBarの太さ
     normalsLUTColorBar.ScalarBarLength = 0.90 #ColorBarの長さ
-    normalsLUTColorBar.TitleFontSize = 18 #タイトルフォントサイズ
-    normalsLUTColorBar.LabelFontSize = 18 #ラベルフォントサイズ
+    normalsLUTColorBar.TitleFontSize = 24 #タイトルフォントサイズ
+    normalsLUTColorBar.LabelFontSize = 24 #ラベルフォントサイズ
 else: 
      # 垂直
     normalsLUTColorBar.WindowLocation = 'Lower Right Corner'
@@ -461,10 +461,8 @@ else:
     #normalsLUTColorBar.HorizontalTitle = 1 # タイトルを横書き
     normalsLUTColorBar.ScalarBarThickness = 36 #ColorBarの太さ
     normalsLUTColorBar.ScalarBarLength = 0.28 #ColorBarの長さ
-    normalsLUTColorBar.TitleFontSize = 16 #タイトルフォントサイズ
-    normalsLUTColorBar.LabelFontSize = 16 #ラベルフォントサイズ
-
-
+    normalsLUTColorBar.TitleFontSize = 20 #タイトルフォントサイズ
+    normalsLUTColorBar.LabelFontSize = 20 #ラベルフォントサイズ
 
 
 
@@ -503,7 +501,8 @@ if Laterality == "L":
         renderView1.CameraFocalPoint = [-34, -18, 15.5]
         renderView1.CameraViewUp = [0.0, 0.0, 1.0]
         #renderView1.CameraViewAngle = 24  # 拡大率？
-        renderView1.CameraViewAngle = 21  # 拡大率？
+        renderView1.CameraViewAngle = 23  # 拡大率？
+        #renderView1.CameraViewAngle = 21  # 拡大率？
     else: 
         ## For Med (真横から)
         #renderView1.CameraPosition = [400, -18, 15.5]
@@ -515,7 +514,8 @@ if Laterality == "L":
         renderView1.CameraFocalPoint = [-34, -18, 15.5]
         renderView1.CameraViewUp = [0.34, 0.0, 0.94]
         #renderView1.CameraViewAngle = 26  # 拡大率？
-        renderView1.CameraViewAngle = 23  # 拡大率？
+        renderView1.CameraViewAngle = 25  # 拡大率？
+        #renderView1.CameraViewAngle = 23  # 拡大率？
         
 elif Laterality == "R": 
     if View == "Lat": 
@@ -524,7 +524,8 @@ elif Laterality == "R":
         renderView1.CameraFocalPoint = [-36, -17, 15.5]
         renderView1.CameraViewUp = [0.0, 0.0, 1.0]
         #renderView1.CameraViewAngle = 24  # 拡大率？
-        renderView1.CameraViewAngle = 21  # 拡大率？
+        renderView1.CameraViewAngle = 23  # 拡大率？
+        #renderView1.CameraViewAngle = 21  # 拡大率？
 
     else: 
         # For Med (真横から)
@@ -537,7 +538,8 @@ elif Laterality == "R":
         renderView1.CameraFocalPoint = [33, -15, 17]
         renderView1.CameraViewUp = [-0.17, 0.0, 0.98]
         #renderView1.CameraViewAngle = 26  # 拡大率？
-        renderView1.CameraViewAngle = 23  # 拡大率？
+        renderView1.CameraViewAngle = 25  # 拡大率？
+        #renderView1.CameraViewAngle = 23  # 拡大率？
 
 
 #
