@@ -13,7 +13,12 @@ where_this_script_exist=`dirname ${0}`
 #
 #
 
+# Infuse_Values_into_VTK_Files
+trgt=./Infuse_Values_into_VTK_Files.ipynb
+jupyter nbconvert --to script ${trgt} --output ${trgt%.ipynb}
 python ./Infuse_Values_into_VTK_Files.py
+rm ./Infuse_Values_into_VTK_Files.py
+
 
 # arg 1: Laterality. "R" or "L".
 # arg 2: View. "Lat" or "Med".
@@ -24,4 +29,9 @@ pvpython ./PvpythonScript_Make_Figure.py R Med none false
 pvpython ./PvpythonScript_Make_Figure.py L Med none false
 pvpython ./PvpythonScript_Make_Figure.py L Lat vertical false
 
+
+# MergePngHorizontally
+trgt=./MergePngHorizontally.ipynb
+jupyter nbconvert --to script ${trgt} --output ${trgt%.ipynb}
 python ./MergePngHorizontally.py
+rm ./MergePngHorizontally.py
