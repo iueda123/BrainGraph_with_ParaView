@@ -13,7 +13,9 @@
 
 **Step 3: generate_horizontally.sh または generate_verticall.sh を走らせる。**
 
-なお、このスクリプト集で使われている方法を応用すれば、より細かな脳アトラスに対応した自由度の高い三次元脳グラフが作れるはずです。
+このスクリプトの実行には、ParaViewが必要です。インストール方法は[下の方](#インストール方法)に書いてあります。
+
+このスクリプト集で使われている方法を応用すれば、より細かな脳アトラスに対応した自由度の高い三次元脳グラフが作れるはずです。
 
 -------- 
 
@@ -25,9 +27,15 @@
 
 ### itksnap_workspaces/
 
+開発用
+
 ### png/
 
+最終画像出力先
+
 ### vtk/
+
+自動生成されるvtkファイルが置かれる場所
 
 ###  *.ipynb
 
@@ -49,13 +57,13 @@ vtkに値を流し込み値を保持したVTKファイル達を生成するス�
 
 ### PvpythonScript_Make_Figure.py
 
-ParaViewの操作レコード機能を使いながら作ったsスクリプト。
+ParaViewの操作レコード機能を使いながら作ったスクリプト。
 
 値を保持VTK達を読込みPNGを生成するスクリプト。
 
 ### MergePngHorizontally.py, MergePngVertically.py
 
-MergePngHorizontally.ipynb, MergePngVertically.ipynb をpythonへ変換したもの。
+MergePngHorizontally.ipynb, MergePngVertically.ipynb をpythonスクリプトへ変換したもの。
 
 ４つの画像（右大脳半球外側画像、右大脳半球内側画像、左大脳半球内側画像、左大脳半球外側画像）を水平または垂直方向に結合するためのスクリプト。
 
@@ -69,6 +77,27 @@ LabelTables
 ### 対応しているLUTs
 
 ![LUTs](./png/LUTs_2.png)
+
+
+--------
+
+
+### ParaViewについて
+    
+#### インストール方法
+公式ページ（ https://www.paraview.org/ ）から、`ParaView-5.12.1-MPI-Linux-Python3.10-x86_64.tar.gz` を入手し、以下のような方法で配備する。
+
+    cd ~/Downloads
+    tar zxvf ParaView-5.12.1-MPI-Linux-Python3.10-x86_64.tar.gz
+    sudo mv ParaView-5.12.1-MPI-Linux-Python3.10-x86_64 /opt
+    # ParaView
+    sudo ln -s /opt/ParaView-5.12.1-MPI-Linux-Python3.10-x86_64/bin/paraview /usr/local/bin
+    # pvpython
+    sudo ln -s /opt/ParaView-5.12.1-MPI-Linux-Python3.10-x86_64/bin/pvpython /usr/local/bin
+
+`paraview` と打ってParaViewが起動されたり、`pvpython` と打ってPythonコンソールに入れればインストール成功である。
+
+![Visualize_SCSs_with_ParaView.png](./png/Visualize_SCSs_with_ParaView.png)
 
 --------
 
@@ -136,24 +165,6 @@ ITK-SNAPでは各トライアングルに平均0、値幅-1〜+1が割り振ら�
 
 
 --------
-
-
-### ParaViewについて
-    
-インストール方法
-公式ページ（ https://www.paraview.org/ ）から、以下を入手する。
-
-ParaView-5.12.0-RC1-MPI-Linux-Python3.10-x86_64.tar.gz
-    cd ~/Downloads
-    tar zxvf ParaView-5.12.0-RC1-MPI-Linux-Python3.10-x86_64.tar.gz
-    sudo mv ParaView-5.12.0-RC1-MPI-Linux-Python3.10-x86_64 /opt
-    # ParaView
-    sudo ln -s /opt/ParaView-5.12.0-RC1-MPI-Linux-Python3.10-x86_64/bin/paraview /usr/local/bin
-    # pvpython
-    sudo ln -s /opt/ParaView-5.12.0-RC1-MPI-Linux-Python3.10-x86_64/bin/pvpython /usr/local/bin
-
-![Visualize_SCSs_with_ParaView.png](./png/Visualize_SCSs_with_ParaView.png)
-
 
 ### MRtrix3、FSL等
 

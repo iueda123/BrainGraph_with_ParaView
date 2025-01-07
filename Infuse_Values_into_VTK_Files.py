@@ -4,19 +4,38 @@
 # <h1>Table of Contents<span class="tocSkip"></span></h1>
 # <div class="toc"><ul class="toc-item"><li><span><a href="#Load-Settings" data-toc-modified-id="Load-Settings-1"><span class="toc-item-num">1&nbsp;&nbsp;</span>Load Settings</a></span></li><li><span><a href="#Load-Tables" data-toc-modified-id="Load-Tables-2"><span class="toc-item-num">2&nbsp;&nbsp;</span>Load Tables</a></span></li><li><span><a href="#Define-Functions" data-toc-modified-id="Define-Functions-3"><span class="toc-item-num">3&nbsp;&nbsp;</span>Define Functions</a></span></li></ul></div>
 
+# In[18]:
+
+
+# 2024.12.18 引用符のありなしでtsv読込に失敗するのでCustomConfigParserを導入
+
+
 # ## Load Settings
 
-# In[1]:
+# In[16]:
 
 
 import configparser
+
+# 引用符の扱いがtsvの読込を邪魔をするのでCustomConfigParserを用意
+class CustomConfigParser(configparser.ConfigParser):
+    def get(self, section, option, **kwargs):
+        value = super().get(section, option, **kwargs)
+        # 先頭と末尾の引用符を削除（必要に応じて追加）
+        if value.startswith('"') and value.endswith('"'):
+            value = value[1:-1]
+        elif value.startswith("'") and value.endswith("'"):
+            value = value[1:-1]
+        return value
+
 # ConfigParserオブジェクトを作成
-config = configparser.ConfigParser()
+config = CustomConfigParser()
 # ファイルを読み込む
 config.read('./config.ini', encoding='utf-8')
 
 # セクションとオプションから値を取得
 value_table_file = config.get('Settings', 'value_table_file')
+output_folder = config.get('Settings', 'output_folder')
 #value_type = config.get('ForDebug', 'value_type')
 value_range_ul_on_figure = float( config.get('Settings', 'value_range_ul_on_figure') )
 value_range_ll_on_figure = float( config.get('Settings', 'value_range_ll_on_figure') )
@@ -26,6 +45,7 @@ if value_range_ul_on_figure < value_range_ll_on_figure:
     value_range_ul_on_figure = tmp
 
 print("value_table_file: " + value_table_file)
+print("output_folder: " + output_folder)
 #print("value_type: " + value_type)
 print("value_range_ul_on_figure: " + str(value_range_ul_on_figure))
 print("value_range_ll_on_figure: " + str(value_range_ll_on_figure))
@@ -33,13 +53,13 @@ print("value_range_ll_on_figure: " + str(value_range_ll_on_figure))
 
 # ## Load Tables
 
-# In[2]:
+# In[5]:
 
 
 import pandas as pd
 
 
-# In[3]:
+# In[17]:
 
 
 #
@@ -48,6 +68,8 @@ import pandas as pd
 #    OBJECT_LABEL: VtkfileTableと橋渡しするためのラベル
 #    VALUE: 各オブジェクトに与えたい値
 #
+
+
 
 df_value_table = pd.read_csv(value_table_file, header=None, names=['OBJECT_LABEL', 'VALUE'], sep="\t")
 print(df_value_table)
