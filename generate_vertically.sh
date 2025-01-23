@@ -17,7 +17,15 @@
 trgt=./Infuse_Values_into_VTK_Files.ipynb
 jupyter nbconvert --to script ${trgt} --output ${trgt%.ipynb}
 python ./Infuse_Values_into_VTK_Files.py
+
+return_code=$? # pythonスクリプト戻り値を取得
+
 rm ./Infuse_Values_into_VTK_Files.py
+
+if [ ! $return_code -eq 0 ]; then
+    echo "Python script failed with return code $return_code."
+    exit 1
+fi
 
 
 # arg 1: Laterality. "R" or "L".

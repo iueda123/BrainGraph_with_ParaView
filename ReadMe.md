@@ -2,8 +2,8 @@
 
 これはParaViewを利用して、脳の三次元グラフを生成するためのスクリプト集です。
 
-![Alt text](./png/ImpactOfNeuroimagingPhenotypesOnBrainAgeEstimation_SA_16to66_RegressionCoefficient.png)
-![Alt text](./png/ImpactOfNeuroimagingPhenotypesOnBrainAgeEstimation_OT_16to66_RegressionCoefficient.png) 
+![Alt text](./files_for_readme/ImpactOfNeuroimagingPhenotypesOnBrainAgeEstimation_SA_RegressionCoefficient.png)
+![Alt text](./files_for_readme/ImpactOfNeuroimagingPhenotypesOnBrainAgeEstimation_OT_RegressionCoefficient.png) 
 
 以下のような3ステップで、上記のようなグラフを比較的簡単に作成できます。
 
@@ -25,19 +25,64 @@
 
 このフォルダ内には脳領域と値が対になって示されたtsvファイルを置く。脳領域はVtkFileTable.tsvで定義されている所定の名前で示す必要がある。脳領域の右隣に値を記述する。脳領域名と値の間にはタブを入れること。
 
+  * SampleValuesForCorticalAreas.tsv, SampleValuesForSubCorStructures.tsv を参考にしてください。
+  
+
 ### itksnap_workspaces/
 
 開発用
 
 ### png/
 
-最終画像出力先
+最終画像出力先。ただしここ以外の場所に出力することも可能。
 
 ### vtk/
 
 自動生成されるvtkファイルが置かれる場所
 
-###  *.ipynb
+### config.ini
+
+以下のような内容とする。
+
+    [Settings]
+    #
+    # value_table_file
+    # (Please over write the templates)
+    # 
+    ValueName = 'Correlation Coefficient'
+    value_table_file='./ValueTables/SampleValues.tsv'
+    Unit = ''
+    output_folder = './png'
+    value_range_ul_on_figure = 0.4
+    value_range_ll_on_figure = -0.4
+    makeBarOrientationHorizontal = False
+
+    #################################
+    # Settings for Color Bar #
+    ################################
+    #LUT = 'Fast'
+    LUT = 'Cool to Warm'
+    #LUT = 'Black-Body Radiation'
+    #LUT = 'Inferno (matplotlib)'
+    #LUT = 'Blue Orange (divergent)'
+    #LUT = 'Cold and Hot'
+    #LUT = 'Rainbow Desaturated'
+    #LUT = 'Rainbow Uniform'
+    #LUT = 'Turbo'
+    #LUT = 'Cool to Warm (Extended)'
+    #LUT = 'X Ray'
+    #LUT = 'Black, Blue and White'
+    #LUT = 'Viridis (matplotlib)'
+    #LUT = 'Linear Green (Gr4L)'
+    #LUT = 'Blue - Green - Orange'
+    #LUT = 'Yellow - Gray - Blue'
+
+    ################################
+    # 輝き: min:0.0, max: 1.0 #
+    ################################
+    SPECULAR = 1.0 
+
+###  ForDevelop_*.ipynb
 
 開発用
 
@@ -49,9 +94,9 @@ tsvファイルとvtkファイルとの橋渡しをするファイル。
 
 現時点で対応している全ての脳領域が書かれている。
 
-### Infuse_Values_into_VTK_Files.py
+### Infuse_Values_into_VTK_Files.ipynb
 
-Infuse_Values_into_VTK_Files.ipynb を py に変換したもの。
+Infuse_Values_into_VTK_Files.py というPythonスクリプトに変換して使用することを想定している。
 
 vtkに値を流し込み値を保持したVTKファイル達を生成するスクリプト
 
@@ -61,22 +106,26 @@ ParaViewの操作レコード機能を使いながら作ったスクリプト。
 
 値を保持VTK達を読込みPNGを生成するスクリプト。
 
-### MergePngHorizontally.py, MergePngVertically.py
+### MergePngHorizontally.ipynb, MergePngVertically.ipynb
 
-MergePngHorizontally.ipynb, MergePngVertically.ipynb をpythonスクリプトへ変換したもの。
+MergePngHorizontally.py, MergePngVertically.py というPythonスクリプトへ変換して使用することを想定している。
 
 ４つの画像（右大脳半球外側画像、右大脳半球内側画像、左大脳半球内側画像、左大脳半球外側画像）を水平または垂直方向に結合するためのスクリプト。
 
-LabelTables
+### generate_horizontally.sh, generate_vertically.sh
 
+実際に呼び出すためのBashスクリプト。
+内部で Infuse_Values_into_VTK_Files.py, PvpythonScript_Make_Figure.py, MergePngHorizontally.py/MergePngVertically.py を呼び出している。
 
-1. ValueTablesに領域
+### ReadMe.md and files_for_readme
+
+For Description
 
 --------
 
 ### 対応しているLUTs
 
-![LUTs](./png/LUTs_2.png)
+![LUTs](./files_for_readme/LUTs_2.png)
 
 
 --------
@@ -97,7 +146,7 @@ LabelTables
 
 `paraview` と打ってParaViewが起動されたり、`pvpython` と打ってPythonコンソールに入れればインストール成功である。
 
-![Visualize_SCSs_with_ParaView.png](./png/Visualize_SCSs_with_ParaView.png)
+![Visualize_SCSs_with_ParaView.png](./files_for_readme/Visualize_SCSs_with_ParaView.png)
 
 --------
 
@@ -196,7 +245,7 @@ ITK-SNAPでは各トライアングルに平均0、値幅-1〜+1が割り振ら�
 
 iu@iu-pu:~/Dropbox/__JNFiles__/HowTo_52_BrainVisualization_with_VTK$ pvpython ./Control_ParaView.py 
 
-![TraceSetting](./png/TraceSetting.png)
+![TraceSetting](./files_for_readme/TraceSetting.png)
 
 
 Tools > Start Trace
