@@ -158,10 +158,10 @@ ITK-SNAPがROI（Segmentation）のSurface MeshをVTKというファイル形式
 またParaViewがPythonスクリプトを使った操作レコーディング機能があるということを知り、
 以下のような流れで三次元の脳のグラフを生成する方法を思い立ちました。
 
-Step 1. ITK-SNAPでROIのSruface MeshをVTK形式で出力。
-Step 2. 出力したVTKファイルを加工
-Step 3. ParaViewでVTKファイルを読込み、描画操作をスクリプト化
-Step 4. スクリプトを整え、自動でPNGファイルを出力させる。
+* Step 1. ITK-SNAPでROIのSruface MeshをVTK形式で出力。
+* Step 2. 出力したVTKファイルを加工
+* Step 3. ParaViewでVTKファイルを読込み、描画操作をスクリプト化
+* Step 4. スクリプトを整え、自動でPNGファイルを出力させる。
 
 Step 1 は、ITK-SNAP上で「Segmentation -> Export as Surface Mesh... -> Export a mesh for a single label -> [NEXT] -> Mesh file name -> [Finish]」でできる。Segmentation自体はfsaverageデータ内のNIfTIファイルを利用する。ITK-SNAPを利用してNIfTIを加工する。
 
@@ -210,15 +210,6 @@ ITK-SNAPでは各トライアングルに平均0、値幅-1〜+1が割り振ら�
 --------
 
 
-### ITK-Snapについて
-
-
---------
-
-### MRtrix3、FSL等
-
---------
-
 ## 作業の流れ
 
 ### ITK-SNAP上でROIを定義する
@@ -258,3 +249,26 @@ Tools > Start Trace
 
 Wireframe, Line Width 3, Render Lines As Tubes ON が良さそうだ。Lightを設定しなくても明るく表示される。
 
+--------
+
+### ITK-Snapについて
+
+
+--------
+
+### MRtrix3、FSL等
+
+--------
+
+### Subcoretical Structures 
+
+![Lat](./files_for_readme/SubCorticalStructures_Lat.png)![Lat](./files_for_readme/SubCorticalStructures_Med.png)
+
+  * 赤 Thalamus 視床 #e41a1c
+  * 青 Caudate 尾状核 #377eb8
+  * 緑 Putamen 被殻 #4daf4a
+  * 紫 Pallidum 淡蒼球 #984ea3
+  * 橙 Hippocampus 海馬 #ff7f00
+  * 黄 Amygdala 扁桃体 #ffff33
+  * 茶 Accumbens-area 側坐核 #a65628
+  * 桃 LatVent 側脳室 #f781bf
