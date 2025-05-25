@@ -117,7 +117,7 @@ MergePngHorizontally.py, MergePngVertically.py というPythonスクリプトへ
 実際に呼び出すためのBashスクリプト。
 内部で Infuse_Values_into_VTK_Files.py, PvpythonScript_Make_Figure.py, MergePngHorizontally.py/MergePngVertically.py を呼び出している。
 
-### ReadMe.md and files_for_readme
+### ReadMe.md and files_for_readme/
 
 For Description
 
