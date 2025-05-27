@@ -1,6 +1,9 @@
-.ipynb_checkpoints
-fsaverage_20220719
-old/
+.ipynb_checkpoints/
+fsaverage_20220719/
+/old/
 git_ignore_files/
-png/CorCoef/
-png/RegCoef/
+/ValueTables/
+/png/
+/vtk/with_val/
+/for_development/vtk/with_val/
+/for_development/png/
