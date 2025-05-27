@@ -13,7 +13,8 @@
 
 **Step 1: 領域名と値を対にしたテキストファイル(tsv)を用意する。**
 
-  * ./ValueTableSamples/SampleValuesForCorticalAreas.tsv, ./ValueTableSamples/SampleValuesForSubCorStructures.tsv を参考にしてください。
+  * ./SampleValuesForCorticalAreas.tsv, ./SampleValuesForSubCorStructures.tsv を参考にしてください。
+  * 脳領域と値が対になって示されたtsvファイルを置く。脳領域はVtkFileTable.tsvで定義されている所定の名前で示す必要がある。脳領域の右隣に値を記述する。脳領域名と値の間にはタブを入れること。
 
 **Step 2: config.ini ファイルで tsvファイルの所在、値範囲、出力先等を指定する。**
 
@@ -28,23 +29,10 @@
 
 ## ファイル・フォルダの説明と主要スクリプトファイルの使い方
 
-### ValueTables/  
-
-このフォルダ内には脳領域と値が対になって示されたtsvファイルを置く。脳領域はVtkFileTable.tsvで定義されている所定の名前で示す必要がある。脳領域の右隣に値を記述する。脳領域名と値の間にはタブを入れること。
-
-  
-
-### itksnap_workspaces/
-
-開発用
-
-### png/
-
-最終画像出力先。ただしここ以外の場所に出力することも可能。
 
 ### vtk/
-
-自動生成されるvtkファイルが置かれる場所
+  * vtk/without_val: 型となるvtkファイルが置かれている場所
+  * vtk/with_val: 自動生成されるvtkファイルが置かれる場所
 
 ### config.ini
 
@@ -99,20 +87,20 @@
   * 脳領域名とvtkファイルの対応関係が書かれている。
   * 現時点で対応している全ての脳領域が書かれている。
 
-### Infuse_Values_into_VTK_Files.ipynb
+### Infuse_Values_into_VTK_Files.py
 
-  * Infuse_Values_into_VTK_Files.py というPythonスクリプトに変換して使用することを想定している。
   * vtkに値を流し込み値を保持したVTKファイル達を生成するスクリプト
+  * Infuse_Values_into_VTK_Files.ipynb を Pythonスクリプトに変換して開発している。
 
 ### PvpythonScript_Make_Figure.py
 
   * ParaViewの操作レコード機能を使いながら作ったスクリプト。
   * 値を保持VTK達を読込みPNGを生成するスクリプト。
 
-### MergePngHorizontally.ipynb, MergePngVertically.ipynb
+### MergePngHorizontally.py, MergePngVertically.py
 
-  * MergePngHorizontally.py, MergePngVertically.py というPythonスクリプトへ変換して使用することを想定している。
   * ４つの画像（右大脳半球外側画像、右大脳半球内側画像、左大脳半球内側画像、左大脳半球外側画像）を水平または垂直方向に結合するためのスクリプト。
+  * MergePngHorizontally.ipynb, MergePngVertically.ipynb ファイルをPythonスクリプトへ変換して開発している。
 
 ### generate_horizontally.sh, generate_vertically.sh
 
