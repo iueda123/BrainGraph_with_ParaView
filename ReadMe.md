@@ -1,5 +1,9 @@
 # BrainGraph with ParaView 
 
+
+Last Updated: 2025.05.27
+
+
 これはParaViewを利用して、脳の三次元グラフを生成するためのスクリプト集です。
 
 ![Alt text](./files_for_readme/ImpactOfNeuroimagingPhenotypesOnBrainAgeEstimation_SA_RegressionCoefficient.png)
@@ -109,7 +113,6 @@
 
 ### ReadMe.md and files_for_readme/
 
-### ReadMe.md and files_for_readme/
   * This file and files for this file.
 
 --------
@@ -138,7 +141,9 @@
 ### ParaViewについて
     
 #### インストール方法
-公式ページ（ https://www.paraview.org/ ）から、`ParaView-5.12.1-MPI-Linux-Python3.10-x86_64.tar.gz` を入手し、以下のような方法で配備する。
+
+公式ページ（ https://www.paraview.org/ ）から、`ParaView-5.12.1-MPI-Linux-Python3.10-x86_64.tar.gz` を入手しインストールしてください。
+また、以下を参考にParaViewをスクリプト制御するためのツールである pvpython にパスを通してください。
 
 Ubuntuの場合
 
@@ -159,6 +164,8 @@ Macの場合（dmpファイルでParaViewをインストールした場合）
 `paraview` と打ってParaViewが起動されたり、`pvpython` と打ってPythonコンソールに入れればインストール成功である。
 
 ![Visualize_SCSs_with_ParaView.png](./files_for_readme/Visualize_SCSs_with_ParaView.png)
+
+現在、ParaView-5.12.1 でのみ動作を確認している。
 
 --------
 
@@ -229,7 +236,7 @@ ITK-SNAPでは各トライアングルに平均0、値幅-1〜+1が割り振ら�
     9 1.71547 -9 9 2 -8.59945 8.23782 2 -9 
     :
     TRIANGLE_STRIPS 321 2607
-89 2 0 1 4 30 33 34 26 82 73 75 74 124 69 118 68 ...
+    89 2 0 1 4 30 33 34 26 82 73 75 74 124 69 118 68 ...
     :
     POINT_DATA 824
     NORMALS normals float
@@ -243,7 +250,7 @@ ITK-SNAPでは各トライアングルに平均0、値幅-1〜+1が割り振ら�
   * ParaViewで表示
   * pvpython でコマンド化
 
-iu@iu-pu:~/Dropbox/__JNFiles__/HowTo_52_BrainVisualization_with_VTK$ pvpython ./Control_ParaView.py 
+    BrainVisualization_with_VTK$ pvpython ./Control_ParaView.py 
 
 ![TraceSetting](./files_for_readme/TraceSetting.png)
 
