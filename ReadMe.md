@@ -140,6 +140,8 @@
 #### インストール方法
 公式ページ（ https://www.paraview.org/ ）から、`ParaView-5.12.1-MPI-Linux-Python3.10-x86_64.tar.gz` を入手し、以下のような方法で配備する。
 
+Ubuntuの場合
+
     cd ~/Downloads
     tar zxvf ParaView-5.12.1-MPI-Linux-Python3.10-x86_64.tar.gz
     sudo mv ParaView-5.12.1-MPI-Linux-Python3.10-x86_64 /opt
@@ -147,6 +149,12 @@
     sudo ln -s /opt/ParaView-5.12.1-MPI-Linux-Python3.10-x86_64/bin/paraview /usr/local/bin
     # pvpython
     sudo ln -s /opt/ParaView-5.12.1-MPI-Linux-Python3.10-x86_64/bin/pvpython /usr/local/bin
+
+Macの場合（dmpファイルでParaViewをインストールした場合）
+
+    ln -s /Applications/ParaView.app/Contents/bin/pvpython /usr/local/bin/pvpython
+    pvpython --version
+
 
 `paraview` と打ってParaViewが起動されたり、`pvpython` と打ってPythonコンソールに入れればインストール成功である。
 
