@@ -159,23 +159,23 @@ echo ""
 pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Lat none false
 pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Med none false
 pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Med none false
-pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Lat vertical false
+pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Lat horizontal false
 
 
 
 echo ""
-echo "MergePngHorizontally"
+echo "MergePngVertically"
 echo ""
 if [[ ${DEVELOPMENT} == true ]]; then
-    trgt=./MergePngHorizontally.ipynb
+    trgt=./MergePngVertically.ipynb
     /home/$USER/.pyenv/shims/jupyter nbconvert --to script ${trgt} --output ${trgt%.ipynb}
 fi
 
-python ${where_this_script_exist}/MergePngHorizontally.py
+python ${where_this_script_exist}/MergePngVertically.py
 
 if [[ ${DEVELOPMENT} == true ]]; then
     echo ""
-    #rm ./MergePngHorizontally.py
+    #rm ./MergePngVertically.py
 fi
 
 

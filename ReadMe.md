@@ -24,7 +24,8 @@ Last Updated: 2025.05.27
 
   * ./config_default.ini を参考にしてください。
 
-**Step 3: ``bash generate_horizontally.sh`` または ``bash generate_verticall.sh``**
+**Step 3: ``bash generate_horizontally_*.sh``**
+  * ``bash generate_horizontally_with_vertical_cbar.sh``, ``bash generate_horizontally_with_horizontal_cbar.sh``, ``bash generate_vertically_with_vertical_cbar.sh``, または ``bash generate_vertically_with_horizontal_cbar.sh`` を走らせてください。
   * このスクリプトの実行には、ParaViewが必要です。インストール方法は[下の方](#インストール方法)に書いてあります。
   * Infuse_Values_into_VTK_File.py, PvpythonScript_Make_Figure.py, MergePngVertically.py, MergePngHorizontally.py, config.ini が同階層にある必要がある。
 
@@ -53,7 +54,6 @@ Last Updated: 2025.05.27
     output_folder = './png'
     value_range_ul_on_figure = 0.4
     value_range_ll_on_figure = -0.4
-    makeBarOrientationHorizontal = False
 
     #################################
     # Settings for Color Bar #
@@ -199,7 +199,6 @@ Step 3 は、ParaViewで「Tools -> Start Trace」でできる。何度もVTKフ
 Step 4ではpvpythonコマンドを使ってStep 3を経て得たpythonスクリプトを走らせる。
 
 
---------
 
 ### ITK-SNAP上でROIを定義する
 
