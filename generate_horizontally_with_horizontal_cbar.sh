@@ -131,8 +131,20 @@ if [[ ${DEVELOPMENT} == true ]]; then
     echo ""
     echo "This is the development mode..."
     echo "" 
-    trgt=./Infuse_Values_into_VTK_Files.ipynb
-    /home/$USER/.pyenv/shims/jupyter nbconvert --to script ${trgt} --output ${trgt%.ipynb}
+    trgt=./for_develompent/Infuse_Values_into_VTK_Files.ipynb
+
+    #JUPYTER_PATH=/home/iu/miniconda3/envs/my-env-202506/bin/jupyter
+    JUPYTER_PATH=/home/iu/fsl/bin/jupyter
+    echo "\$JUPYTER_PATH: $JUPYTER_PATH"
+    if [[ -e $JUPYTER_PATH ]]; then
+        $JUPYTER_PATH nbconvert --to script ${trgt} --output ${trgt%.ipynb}
+        exit 0
+    else
+        echo "$JUPYTER_PATH does note exist."
+        exit 1
+    fi
+
+    
 fi
 
 python ${where_this_script_exist}/Infuse_Values_into_VTK_Files.py

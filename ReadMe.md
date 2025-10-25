@@ -16,18 +16,20 @@ Last Updated: 2025.05.27
 以下のような3ステップで、上記のようなグラフを簡単に作成できます。
 
 **Step 1: 領域名と値を対にしたテキストファイル(tsv)を用意する。**
-
-  * ./SampleValuesForCorticalAreas.tsv, ./SampleValuesForSubCorStructures.tsv を参考にしてください。
-  * 脳領域と値が対になって示されたtsvファイルを置く。脳領域はVtkFileTable.tsvで定義されている所定の名前で示す必要がある。脳領域の右隣に値を記述する。脳領域名と値の間にはタブを入れること。
+  * 脳領域名は VtkFileTable.tsv で定義されている名前を使うこと。
+  * 脳領域名の右隣に値を記述する。脳領域名と値の間にはタブを入れる。
+  * ./SampleValuesForCorticalAreas.tsv, ./SampleValuesForSubCorStructures.tsv を参考にしてください。 
 
 **Step 2: config.ini ファイルで tsvファイルの所在、値範囲、出力先等を指定する。**
-
   * ./config_default.ini を参考にしてください。
 
-**Step 3: ``bash generate_horizontally_*.sh``**
-  * ``bash generate_horizontally_with_vertical_cbar.sh``, ``bash generate_horizontally_with_horizontal_cbar.sh``, ``bash generate_vertically_with_vertical_cbar.sh``, または ``bash generate_vertically_with_horizontal_cbar.sh`` を走らせてください。
-  * このスクリプトの実行には、ParaViewが必要です。インストール方法は[下の方](#インストール方法)に書いてあります。
-  * Infuse_Values_into_VTK_File.py, PvpythonScript_Make_Figure.py, MergePngVertically.py, MergePngHorizontally.py, config.ini が同階層にある必要がある。
+**Step 3: 生成コマンドを走らせる**
+  * 以下のいずれかを走らせる
+    * ``bash generate_horizontally_with_vertical_cbar.sh``
+    * ``bash generate_horizontally_with_horizontal_cbar.sh``
+    * ``bash generate_vertically_with_vertical_cbar.sh``
+    * ``bash generate_vertically_with_horizontal_cbar.sh`` を走らせてください。
+  * これらのスクリプトの実行には、ParaView（インストール方法は[下の方](#インストール方法)を参照）、および同階層に置かれた Infuse_Values_into_VTK_File.py, PvpythonScript_Make_Figure.py, MergePngVertically.py, MergePngHorizontally.py, config.ini が必要。python library "pands"、"Pillow" も必要。
 
 
 -------- 
@@ -147,25 +149,31 @@ Last Updated: 2025.05.27
 
 Ubuntuの場合
 
-    cd ~/Downloads
-    tar zxvf ParaView-5.12.1-MPI-Linux-Python3.10-x86_64.tar.gz
-    sudo mv ParaView-5.12.1-MPI-Linux-Python3.10-x86_64 /opt
-    # ParaView
-    sudo ln -s /opt/ParaView-5.12.1-MPI-Linux-Python3.10-x86_64/bin/paraview /usr/local/bin
-    # pvpython
-    sudo ln -s /opt/ParaView-5.12.1-MPI-Linux-Python3.10-x86_64/bin/pvpython /usr/local/bin
+```bash
+cd ~/Downloads
+tar zxvf ParaView-5.12.1-MPI-Linux-Python3.10-x86_64.tar.gz
+sudo mv ParaView-5.12.1-MPI-Linux-Python3.10-x86_64 /opt
+# ParaView
+sudo ln -s /opt/ParaView-5.12.1-MPI-Linux-Python3.10-x86_64/bin/paraview /usr/local/bin
+# pvpython
+sudo ln -s /opt/ParaView-5.12.1-MPI-Linux-Python3.10-x86_64/bin/pvpython /usr/local/bin
+```
 
 Macの場合（dmpファイルでParaViewをインストールした場合）
 
-    ln -s /Applications/ParaView.app/Contents/bin/pvpython /usr/local/bin/pvpython
-    pvpython --version
-
+```bash
+ln -s /Applications/ParaView.app/Contents/bin/pvpython /usr/local/bin/pvpython
+pvpython --version
+```
 
 `paraview` と打ってParaViewが起動されたり、`pvpython` と打ってPythonコンソールに入れればインストール成功である。
 
 ![Visualize_SCSs_with_ParaView.png](./files_for_readme/Visualize_SCSs_with_ParaView.png)
 
-現在、ParaView-5.12.1 でのみ動作を確認している。
+
+**補足事項**
+  * 現在、ParaView-5.12.1 でのみ動作を確認している。
+
 
 --------
 

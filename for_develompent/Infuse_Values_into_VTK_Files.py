@@ -4,7 +4,7 @@
 # <h1>Table of Contents<span class="tocSkip"></span></h1>
 # <div class="toc"><ul class="toc-item"><li><span><a href="#Load-Settings" data-toc-modified-id="Load-Settings-1"><span class="toc-item-num">1&nbsp;&nbsp;</span>Load Settings</a></span></li><li><span><a href="#Load-Tables" data-toc-modified-id="Load-Tables-2"><span class="toc-item-num">2&nbsp;&nbsp;</span>Load Tables</a></span></li><li><span><a href="#Define-Functions" data-toc-modified-id="Define-Functions-3"><span class="toc-item-num">3&nbsp;&nbsp;</span>Define Functions</a></span></li></ul></div>
 
-# In[4]:
+# In[1]:
 
 
 # 2024.12.18 引用符のありなしでtsv読込に失敗するのでCustomConfigParserを導入
@@ -12,7 +12,7 @@
 
 # ## Load Settings
 
-# In[5]:
+# In[2]:
 
 
 import configparser
@@ -53,7 +53,7 @@ print("value_range_ul_on_figure: " + str(value_range_ul_on_figure))
 print("value_range_ll_on_figure: " + str(value_range_ll_on_figure))
 
 
-# In[ ]:
+# In[3]:
 
 
 import os
@@ -71,13 +71,13 @@ print(f"File '{file_path}' exists. Continuing script...")
 
 # ## Load Tables
 
-# In[5]:
+# In[4]:
 
 
 import pandas as pd
 
 
-# In[17]:
+# In[7]:
 
 
 #
@@ -89,7 +89,9 @@ import pandas as pd
 
 
 
-df_value_table = pd.read_csv(value_table_file, header=None, names=['OBJECT_LABEL', 'VALUE'], sep="\t")
+df_value_table = pd.read_csv(value_table_file, header=None, 
+                             names=['OBJECT_LABEL', 'VALUE'], 
+                             sep="\t", comment="#")
 print(df_value_table)
 
 
@@ -118,40 +120,40 @@ print(df_file_table)
 #
 def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_table, verbose):
     print("------------------------ addValueToAVtkFile() has been called ------------------------")
-    
+
     print('input_roi_vtk_file_path: ' + input_roi_vtk_file_path)
-    
+
     #
     # === Preparing output destinations ===
     #
     print('output_destination: ' + output_destination)
-    
+
     import pathlib
     input_file_name = pathlib.Path(input_roi_vtk_file_path).name
     input_file_parent =  pathlib.Path(input_roi_vtk_file_path).parent
     ouput_file_path = "./" + str(pathlib.Path(output_destination)) + "/" +input_file_name
     output_file_parent = pathlib.Path(ouput_file_path).parent
-    
+
     import os
     if not os.path.isfile(input_roi_vtk_file_path): 
         print("The input file does not exist. (do nothing)")
         return
-    
+
     if output_file_parent == input_file_parent: 
         print("The parent of the specified output file is identical to the parent of the input file. Check arguments. (do nothing) ")
         return
-    
+
     if verbose == True:
         print("input_file_name: " + input_file_name)
         print("ouput_file_path: " + ouput_file_path)
-    
+
     output_folder=os.path.dirname(ouput_file_path)
     if  os.path.exists(output_folder): 
         print("    '" + output_folder + "' already exists.")
     else: 
         os.makedirs(output_folder, exist_ok=True)
         print("    '" + output_folder + "' was created.")
-    
+
 
     # 
     # === Load A VTK File ===
@@ -161,14 +163,14 @@ def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_
     f = open(input_file_path)
     lines = f.readlines() # 1行毎にファイル終端まで全て読む(改行文字も含まれる)
     f.close()
-    
+
     # lines: リスト。要素は1行の文字列データ
-    
+
     if verbose == True:
         for line in lines:
             print(line, end="")
         print()
-    
+
     #
     # === Search the First Line of Data Field ===
     #
@@ -182,7 +184,7 @@ def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_
     if verbose == True:
         print("The first line of Data Filed: " + lines[start_line_num_of_data])
         print()
-    
+
     #
     # === Add A Number to the Data Field ===
     #
@@ -200,7 +202,7 @@ def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_
         values = [float(i) for i in values]
         #print(values)
         new_values = []
-        
+
         #############################################
         # Sequential Values
         # e.g.: 0〜+100; 0〜+1; 0〜+X
@@ -214,7 +216,7 @@ def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_
             value_type = "DIVERGING"
         else:
             value_type = "SEQUENTIAL"
-        
+
         if value_type == "DIVERGING": 
             base_range_on_figure = value_range_ul_on_figure - 0
             fluctuation_factor = base_range_on_figure / 5
@@ -233,7 +235,7 @@ def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_
         else: 
             print("Error. Please check 'value_type'.")
             import sys; sys.exit()
-        
+
         #
         # For Infused Value Check
         #
@@ -243,9 +245,9 @@ def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_
         #    print(str(statistics.mean(new_values)) + "±" + (str(statistics.stdev(new_values))) )
         for new_value in new_values: 
             infused_values.append(new_value)
-            
+
         #############################################
-        
+
         new_values_str = [str(i) for i in new_values]
         #new_values_str = new_values_str.append(" ")
         #new_values_str = new_values_str.append("\n")
@@ -253,19 +255,19 @@ def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_
         new_values_str = new_values_str + " \n"
         #print(new_values_str)
         new_data_lines.append(new_values_str)
-        
 
-        
+
+
     print("...done.")
-    
+
     if verbose == True:
         print("")
         print("new_data_lines: ")
         print(new_data_lines)
         print("")
-    
+
     print()
-    
+
     #
     # === Output As A New File ===
     #
@@ -282,26 +284,26 @@ def infuseValueIntoAVtkFile(input_roi_vtk_file_path, output_destination, val_on_
             #print(new_data_lines[j])
             new_lines.append(new_data_lines[j])
     print("")
-    
+
     if verbose == True:
         print("new_lines: ")
         print(new_lines)
         print()
-    
-    
+
+
     with open(ouput_file_path, mode='w') as f:
         f.writelines(new_lines)
-    
-    
+
+
     import statistics
     infused_value_stats = str(statistics.mean(infused_values)) + "±" + (str(statistics.stdev(infused_values)))
-    
-    
+
+
     print("'" + ouput_file_path + "' was generated. (Infused Value: " + infused_value_stats + ")" )
     print("--------------------------------------------------------------------------------------")
     print()
-    
-            
+
+
 #infuseValueIntoAVtkFile(
 #    input_roi_vtk_file_path="./vtk/Lt_Brain_NonCortical/074_Left-Thalamus.vtk", 
 #    output_destination="./vtk/Lt_Brain_NonCortical_with_Val", 
