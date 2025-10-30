@@ -412,7 +412,8 @@ for REGION in Regions_with_Val:
 # 背景色
 renderView1.UseColorPaletteForBackground = 0
 renderView1.BackgroundColorMode = 'Single Color'
-renderView1.Background = [0.9372549019607843, 0.9372549019607843, 0.9372549019607843]
+#renderView1.Background = [0.9372549019607843, 0.9372549019607843, 0.9372549019607843]
+renderView1.Background = [1.0, 1.0, 1.0]
 
 
 #
