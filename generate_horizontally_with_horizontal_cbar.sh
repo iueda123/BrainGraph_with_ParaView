@@ -167,11 +167,12 @@ echo ""
 # arg 1: Laterality. "R" or "L".
 # arg 2: View. "Lat" or "Med".
 # arg 3: Orientation of ColorBar. "vertical" "horizontal", or "none".
-# art 4: showPreview. "true" or "false". 
-pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Lat none false
-pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Med none false
-pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Med none false
-pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Lat horizontal false
+# art 4: shouldForcelyHideEmptySubcorticalStructures. "true" or "false". 
+# art 5: showPreview. "true" or "false". 
+pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Lat none       "false" "false"
+pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Med none       "false" "false"
+pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Med none       "false" "false"
+pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Lat horizontal "false" "false"
 
 
 

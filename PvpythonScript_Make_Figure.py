@@ -1,28 +1,32 @@
 # PvpythonScript
 
-#
-# ver 20240127
-# 
-# arg1: Laterality. L or R.
-# arg2: View. Med or Lat.
-# arg3: displayColorBarAndLegend. True or False.
-#
-#
+print("")
+print("#################################")
+print("# PvpythonScript_Make_Figure.py #")
+print("#################################")
+print("")
 
+#
+# ver 20251030
 # 
 # --------------------------------------------------------------
+#
 
 # Main Settings from args
 #
 # arg 1: Laterality. "R" or "L".
 # arg 2: View. "Lat" or "Med".
 # arg 3: Orientation of ColorBar. "vertical" "horizontal", or "none".
-# art 4: showPreview. "true" or "false". 
+# arg 4: shouldForcelyHideEmptySubcorticalStructures. "true" or "false".
+# art 5: showPreview. "true" or "false". 
+
+# arg 4 について
+# 強制的に値０の皮質下領域を非表示にしたい場合は "true" を指定する
 
 import sys
 args = sys.argv
 #print(len(args))
-if len(args) == 5:
+if len(args) == 6:
     
     Laterality = args[1]
     
@@ -44,8 +48,14 @@ if len(args) == 5:
         sys.stderr.write('Error occurred! Plese specify \"vertical\", \"horizontal\", or \"none\" for ColorBarOrientation.')
         sys.exit(1)
 
-    # showPreview
+    # shouldForcelyHideEmptySubcorticalStructures
     if args[4].lower() == "true": 
+        shouldForcelyHideEmptySubcorticalStructures = True
+    else: 
+        shouldForcelyHideEmptySubcorticalStructures = False
+
+    # showPreview
+    if args[5].lower() == "true": 
         showPreview = True
     else: 
         showPreview = False
@@ -55,12 +65,15 @@ else:
     View = "Lat"
     displayColorBarAndLegend = True
     makeBarOrientationHorizontal = True   
+    shouldForcelyHideEmptySubcorticalStructures = False
     showPreview = True
+    
 
 print("Laterality: " + Laterality)
 print("View: " + View)
 print("displayColorBarAndLegend: " + str(displayColorBarAndLegend))
 print("makeBarOrientationHorizontal: " + str(makeBarOrientationHorizontal) )
+print("shouldForcelyHideEmptySubcorticalStructures: " + str(shouldForcelyHideEmptySubcorticalStructures))
 print("showPreview: " + str(showPreview))
 
 # --------------------------------------------------------------
@@ -153,6 +166,18 @@ def get_file_names_with_extension(folder_path, target_extension):
 #load_taraget_vtk_file_names = get_file_names_with_extension(Folder_Roi_with_Val, ".vtk") # 全てをロード
 
 def get_SurfaceAreaVtkFileNames(folder_path, lat):
+    """
+    指定されたフォルダから皮質領域のVTKファイル名を取得する関数
+
+    Args:
+        folder_path (str): VTKファイルが格納されているフォルダパス
+        lat (str): 側性を指定。"L"（左半球）または "R"（右半球）
+
+    Returns:
+        list: 条件に一致するVTKファイル名のリスト
+              左半球の場合は "-lh-" を含むファイル名、
+              右半球の場合は "-rh-" を含むファイル名を返す
+    """
     file_names = []
     import re    
     import os
@@ -251,21 +276,28 @@ empty_ccvtk = None
 hippo_vtk = None
 amygdala_vtk = None
 
-shouldLoadEmptyCC = None
+shouldLoadEmptySubcorticalStructures = None
 if( len(get_SurfaceAreaVtkFileNames(Folder_Roi_with_Val, Laterality)) > 0 ): 
-    shouldLoadEmptyCC = True
+    # ./vtk/with_val フォルダ内に皮質領域のVTKファイルが1つ以上存在する場合
+    shouldLoadEmptySubcorticalStructures = True
 else: 
-    shouldLoadEmptyCC = False
+    # ./vtk/with_val フォルダ内に皮質領域のVTKファイルが1つも存在しない場合
+    shouldLoadEmptySubcorticalStructures = False
+
+
+if shouldForcelyHideEmptySubcorticalStructures:
+    shouldLoadEmptySubcorticalStructures = False   # 強制的に値０の皮質下領域を非表示にする
+    
 
 if Laterality == "L": 
     ribbonvtk = LegacyVTKReader(registrationName='Lt_ribbon.vtk', FileNames=[Folder_Roi_without_Val + '/Lt_ribbon.vtk'])
-    if shouldLoadEmptyCC: 
+    if shouldLoadEmptySubcorticalStructures: 
         empty_ccvtk = LegacyVTKReader(registrationName='Lt_Empty_CC.vtk', FileNames=[Folder_Roi_without_Val + '/Lt_Empty_CC.vtk'])
         hippo_vtk = LegacyVTKReader(registrationName='086_Left-Hippocampus.vtk', FileNames=[Folder_Roi_without_Val + '/078_Left-Hippocampus.vtk'])
         amygdala_vtk = LegacyVTKReader(registrationName='079_Left-Amygdala.vtk.vtk', FileNames=[Folder_Roi_without_Val + '/079_Left-Amygdala.vtk'])
 elif Laterality == "R": 
     ribbonvtk = LegacyVTKReader(registrationName='Rt_ribbon.vtk', FileNames=[Folder_Roi_without_Val + '/Rt_ribbon.vtk'])
-    if shouldLoadEmptyCC: 
+    if shouldLoadEmptySubcorticalStructures: 
         empty_ccvtk = LegacyVTKReader(registrationName='Rt_Empty_CC.vtk', FileNames=[Folder_Roi_without_Val + '/Rt_Empty_CC.vtk'])
         hippo_vtk = LegacyVTKReader(registrationName='086_Right-Hippocampus.vtk', FileNames=[Folder_Roi_without_Val + '/086_Right-Hippocampus.vtk'])
         amygdala_vtk = LegacyVTKReader(registrationName='087_Right-Amygdala.vtk', FileNames=[Folder_Roi_without_Val + '/087_Right-Amygdala.vtk'])
@@ -412,8 +444,8 @@ for REGION in Regions_with_Val:
 # 背景色
 renderView1.UseColorPaletteForBackground = 0
 renderView1.BackgroundColorMode = 'Single Color'
-#renderView1.Background = [0.9372549019607843, 0.9372549019607843, 0.9372549019607843]
-renderView1.Background = [1.0, 1.0, 1.0]
+#renderView1.Background = [0.9372549019607843, 0.9372549019607843, 0.9372549019607843] # 灰色
+renderView1.Background = [1.0, 1.0, 1.0]  # 白色
 
 
 #
