@@ -17,8 +17,13 @@ Steps (all deterministic: the same inputs and parameters give the same files)
      (windowed sinc), and compute vertex normals.
   2. Give every vertex the label of the nearest vertex among the label meshes. Vertices farther than
      max_transfer_mm from every label mesh (the medial wall) stay unlabelled.
-  3. Smooth the labels: label_smoothing_rounds rounds of majority vote over the mesh neighbours.
+  3. Vertices that lie inside the medial-wall filler (see filler_L / filler_R in the atlas definition) are
+     unlabelled, so that bits of cortex tucked into the callosal sulcus do not poke through the filler.
+     (hide_inside_filler = 0 turns this off.)
+     Then smooth the labels: label_smoothing_rounds rounds of majority vote over the mesh neighbours.
   4. A face takes the majority label of its three vertices. A face whose vertices disagree is a border face.
+  5. Of each label, only its largest connected piece is kept when the other pieces are smaller than
+     min_island_faces (default 200 faces); the small pieces are unlabelled. (min_island_faces = 0 turns this off.)
 
 Outputs in ./vtk/labeled/<atlas>/
   Lt_surface.vtk, Rt_surface.vtk  surface; cell arrays LabelID (-1 = unlabelled) and IsBorder
@@ -36,9 +41,12 @@ import sys
 from pathlib import Path
 
 import numpy as np
+from scipy.sparse import coo_matrix
+from scipy.sparse.csgraph import connected_components
 from vtkmodules.util import numpy_support
 from vtkmodules.vtkCommonCore import vtkObject, vtkSMPTools
 from vtkmodules.vtkCommonDataModel import vtkPolyData
+from vtkmodules.vtkFiltersModeling import vtkSelectEnclosedPoints
 from vtkmodules.vtkFiltersCore import (
     vtkExtractCells, vtkPolyDataNormals, vtkTriangleFilter, vtkWindowedSincPolyDataFilter,
 )
@@ -60,6 +68,8 @@ DEFAULTS = {
     "mesh_smoothing_iterations": 25,
     "mesh_smoothing_passband": 0.08,
     "border_offset_mm": 0.12,
+    "hide_inside_filler": 1,
+    "min_island_faces": 200,
 }
 
 
@@ -146,6 +156,24 @@ def nearest_label(points, label_points, label_ids, max_dist):
     return out
 
 
+def inside_mesh(points, closed_mesh):
+    """Boolean mask: which points lie inside the closed mesh."""
+    from vtkmodules.vtkCommonCore import vtkPoints
+    pd = vtkPolyData()
+    vp = vtkPoints()
+    vp.SetData(numpy_support.numpy_to_vtk(points.astype(np.float32), deep=True))
+    pd.SetPoints(vp)
+    sel = vtkSelectEnclosedPoints()
+    sel.SetInputData(pd)
+    sel.SetSurfaceData(closed_mesh)
+    sel.CheckSurfaceOn()
+    sel.SetTolerance(1e-4)
+    sel.Update()
+    if not sel.IsSurfaceClosed(closed_mesh):
+        sys.exit("The medial-wall filler is not a closed surface; set hide_inside_filler = 0 or fix the mesh.")
+    return numpy_support.vtk_to_numpy(sel.GetOutput().GetPointData().GetArray("SelectedPoints")).astype(bool)
+
+
 def smooth_labels(lab, tris, n_labels, rounds):
     """Majority vote over mesh neighbours (own label included). Index 0 = unlabelled."""
     n = len(lab)
@@ -160,6 +188,34 @@ def smooth_labels(lab, tris, n_labels, rounds):
         keep = counts[np.arange(n), lab] == best  # a tie keeps the current label
         lab = np.where(keep, lab, counts.argmax(axis=1))
     return lab - 1
+
+
+def small_islands(face, tris, min_faces):
+    """Boolean mask over faces: pieces of a label (faces joined through shared edges) other than its largest,
+    when they hold fewer than min_faces faces."""
+    n = len(tris)
+    ids = np.arange(n)
+    ea = np.concatenate([tris[:, 0], tris[:, 1], tris[:, 2]])
+    eb = np.concatenate([tris[:, 1], tris[:, 2], tris[:, 0]])
+    key = np.minimum(ea, eb).astype(np.int64) * (tris.max() + 1) + np.maximum(ea, eb)
+    fid = np.concatenate([ids, ids, ids])
+    order = np.argsort(key, kind="stable")
+    k, f = key[order], fid[order]
+    same_edge = k[1:] == k[:-1]
+    fa, fb = f[:-1][same_edge], f[1:][same_edge]
+    joined = (face[fa] == face[fb]) & (face[fa] >= 0)
+    fa, fb = fa[joined], fb[joined]
+    graph = coo_matrix((np.ones(len(fa), dtype=np.int8), (fa, fb)), shape=(n, n))
+    _, comp = connected_components(graph, directed=False)
+    out = np.zeros(n, dtype=bool)
+    for lab in np.unique(face[face >= 0]):
+        members = np.nonzero(face == lab)[0]
+        sizes = np.bincount(comp[members])
+        biggest = sizes.argmax()
+        for c in np.nonzero((sizes > 0) & (sizes < min_faces))[0]:
+            if c != biggest:
+                out[members[comp[members] == c]] = True
+    return out
 
 
 def face_labels(vlab, tris):
@@ -219,15 +275,24 @@ def build(atlas, params):
             lp.append(p.astype(np.float64))
             li.append(np.full(len(p), label_id[lab], dtype=np.int64))
         vlab = nearest_label(pts, np.concatenate(lp), np.concatenate(li), params["max_transfer_mm"])
+        filler = smoothed_surface(MESH_DIR / a[f"filler_{hemi}"], params) if a.get(f"filler_{hemi}") else None
+        if filler is not None and params["hide_inside_filler"]:
+            vlab[inside_mesh(pts, filler)] = -1
         vlab = smooth_labels(vlab, tris, len(rows), params["label_smoothing_rounds"])
         flab, fborder = face_labels(vlab, tris)
+        if params["min_island_faces"] > 0:
+            island = small_islands(flab, tris, params["min_island_faces"])
+            if island.any():
+                drop = np.unique(tris[island].ravel())
+                vlab[drop[np.isin(vlab[drop], np.unique(flab[island]))]] = -1
+                flab, fborder = face_labels(vlab, tris)
 
         surface.GetCellData().AddArray(_int_array(flab, "LabelID"))
         surface.GetCellData().AddArray(_int_array(fborder.astype(np.int64), "IsBorder"))
         write_poly(surface, out_dir / f"{prefix}_surface.vtk")
         write_poly(border_layer(surface, fborder, params["border_offset_mm"]), out_dir / f"{prefix}_border.vtk")
-        if a.get(f"filler_{hemi}"):
-            write_poly(smoothed_surface(MESH_DIR / a[f"filler_{hemi}"], params), out_dir / f"{prefix}_filler.vtk")
+        if filler is not None:
+            write_poly(filler, out_dir / f"{prefix}_filler.vtk")
 
         report.append((hemi, "(unlabelled)", int((flab < 0).sum()), int(((flab < 0) & fborder).sum())))
         for lab, h, _ in rows:
