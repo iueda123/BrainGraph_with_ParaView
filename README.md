@@ -6,8 +6,10 @@ Last Updated: 2025.05.27
 
 これはParaViewを利用して、脳の三次元グラフを生成するためのスクリプト集です。
 
-![Alt text](./files_for_readme/ImpactOfNeuroimagingPhenotypesOnBrainAgeEstimation_SA_RegressionCoefficient.png)
-![Alt text](./files_for_readme/ImpactOfNeuroimagingPhenotypesOnBrainAgeEstimation_OT_RegressionCoefficient.png) 
+![Four rows of cortex and deep structures coloured by Cohen's d](./files_for_readme/Example_MultiRow_CohensD.png)
+![Cortical thickness, surface area and deep structures coloured by a regression coefficient](./files_for_readme/Example_ThreeRows_RegressionCoefficient.png)
+
+上の 2 枚は `Compose_Figure.py`（`generate_*.sh` が呼ぶ）で組んだ図。視野ごとの見出し、行ラベル、カラーバー、NA 領域の凡例まで自動で付く。
 
 -------- 
 
@@ -29,8 +31,36 @@ Last Updated: 2025.05.27
     * ``bash generate_horizontally_with_horizontal_cbar.sh``
     * ``bash generate_vertically_with_vertical_cbar.sh``
     * ``bash generate_vertically_with_horizontal_cbar.sh`` を走らせてください。
+  * 既定（config.ini の `[Figure]` で `style = panel`、省略時も同じ）では、`Compose_Figure.py` が視野の画像を描き、見出し・カラーバー・NA 凡例つきの 1 枚に組む。
+    値表に皮質と深部構造の両方の領域があれば、自動で分けて描き、横に並べる。`--direction`（h: 4 視野を横、v: 縦）と `--cbar`（horizontal / vertical / none）は
+    スクリプトの名前（`generate_<向き>_with_<向き>_cbar.sh`、`generate_horizontally_without_cbar.sh`）で決まる。
+  * 従来の出力（ParaView のカラーバー、4 視野をそのまま結合）に戻すには `[Figure]` に `style = classic` を書く。
   * これらのスクリプトの実行には、ParaView（インストール方法は[下の方](#インストール方法)を参照）、および同階層に置かれた Infuse_Values_into_VTK_File.py, PvpythonScript_Make_Figure.py, MergePngVertically.py, MergePngHorizontally.py, config.ini が必要。python library "pands"、"Pillow" も必要。
 
+
+-------- 
+
+## 図の組版（Compose_Figure.py）
+
+Last Updated: 2026.10.23
+
+config.ini の `[Figure]`（すべて省略可。キーの一覧は config_default.ini）で、図の体裁を決める。
+
+    [Figure]
+    style = panel
+    cbar_label = Cohen's *d* (patient − HCL)   # *...* は斜体
+    na_label = Holm-adjusted *p* ≥ .05         # 空なら NA の凡例を付けない
+    ticks = 0 0.2 0.4 0.6 0.8                  # 省略時は 5 等分
+    rows =
+        SCZ | ./ValueTables/SCZ_cortex.tsv | ./ValueTables/SCZ_deep.tsv
+        BPD | ./ValueTables/BPD_cortex.tsv | ./ValueTables/BPD_deep.tsv
+
+  * `rows` を書くと、1 行 = `ラベル | 皮質の値表 | 深部構造の値表`（どちらも空にできる。ラベルの `\n` は改行）の図になる。
+    書かなければ `value_table_file` から 1 行を作る。
+  * 列は `views_cortex`（既定 `L_Lat L_Med R_Med R_Lat`）と `views_deep`（既定 `L_Lat R_Lat`）で選ぶ。`group_titles` は列の上の見出し（既定 `Cortex, Deep structures`）。
+  * 文字は Arial（なければ Liberation Sans、DejaVu Sans）。画像は `image_scale = 3` で描き直してから縮めて貼る。
+  * 他のプログラムからは `Compose_Figure.make_figure()` を呼べる（本プロジェクトの `Analyses/main/tools/make_brain_maps.py` が例）。
+  * ParaView 側の描画だけが要るときは、環境変数 `BRAINGRAPH_RENDER_ONLY=1` で `generate_horizontally_without_cbar.sh` を走らせる（Compose_Figure.py 自身がそうしている）。
 
 -------- 
 

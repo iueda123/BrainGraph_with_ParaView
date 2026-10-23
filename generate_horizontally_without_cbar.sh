@@ -147,6 +147,14 @@ if [[ ${DEVELOPMENT} == true ]]; then
 
 fi
 
+# style = panel (the default): assemble the figure (titles, NA swatch, no colour bar) in Compose_Figure.py, which calls this
+# script again with BRAINGRAPH_RENDER_ONLY=1 to draw the plain views. style = classic: the former flow below.
+FIGURE_STYLE=$(python ${where_this_script_exist}/Compose_Figure.py --print-style)
+if [[ ${DEVELOPMENT} != true && -z "${BRAINGRAPH_RENDER_ONLY}" && "${FIGURE_STYLE}" == "panel" ]]; then
+    python ${where_this_script_exist}/Compose_Figure.py --direction h --cbar none
+    exit $?
+fi
+
 python ${where_this_script_exist}/Infuse_Values_into_VTK_Files.py
 return_code=$? # pythonスクリプト戻り値を取得
 

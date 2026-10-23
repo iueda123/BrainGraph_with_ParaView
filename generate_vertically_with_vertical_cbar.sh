@@ -135,6 +135,14 @@ if [[ ${DEVELOPMENT} == true ]]; then
     /home/$USER/.pyenv/shims/jupyter nbconvert --to script ${trgt} --output ${trgt%.ipynb}
 fi
 
+# style = panel (the default): draw the views and assemble the figure (titles, colour bar, NA swatch) in Compose_Figure.py.
+# style = classic: the former flow below (ParaView colour bar, plain merge of the four views).
+FIGURE_STYLE=$(python ${where_this_script_exist}/Compose_Figure.py --print-style)
+if [[ ${DEVELOPMENT} != true && "${FIGURE_STYLE}" == "panel" ]]; then
+    python ${where_this_script_exist}/Compose_Figure.py --direction v --cbar vertical
+    exit $?
+fi
+
 python ${where_this_script_exist}/Infuse_Values_into_VTK_Files.py
 return_code=$? # pythonスクリプト戻り値を取得
 

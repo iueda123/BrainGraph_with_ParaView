@@ -8,3 +8,4 @@ git_ignore_files/
 /for_development/vtk/with_val/
 /for_development/png/
 /vtk/labeled/
+__pycache__/
