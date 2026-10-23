@@ -20,7 +20,11 @@ Steps (all deterministic: the same inputs and parameters give the same files)
   3. Vertices that lie inside the medial-wall filler (see filler_L / filler_R in the atlas definition) are
      unlabelled, so that bits of cortex tucked into the callosal sulcus do not poke through the filler.
      (hide_inside_filler = 0 turns this off.)
-     Then smooth the labels: label_smoothing_rounds rounds of majority vote over the mesh neighbours.
+     Then smooth the labels (label_smoothing_method):
+       diffusion  every label is spread over the mesh neighbours label_smoothing_rounds times (each round mixes
+                  label_smoothing_weight of the neighbours' average into the vertex), and each vertex takes the
+                  label with the largest share. This evens out borders, including one-triangle teeth.
+       vote       label_smoothing_rounds rounds of majority vote over the mesh neighbours (a tie keeps the label).
   4. A face takes the majority label of its three vertices. A face whose vertices disagree is a border face.
   5. Of each label, only its largest connected piece is kept when the other pieces are smaller than
      min_island_faces (default 200 faces); the small pieces are unlabelled. (min_island_faces = 0 turns this off.)
@@ -63,7 +67,9 @@ MESH_DIR = HERE / "vtk" / "without_val"
 
 DEFAULTS = {
     "max_transfer_mm": 3.0,
-    "label_smoothing_rounds": 6,
+    "label_smoothing_method": "diffusion",
+    "label_smoothing_rounds": 20,
+    "label_smoothing_weight": 0.5,
     "mesh_smoothing_iterations": 25,
     "mesh_smoothing_passband": 0.08,
     "border_offset_mm": 0.12,
@@ -170,6 +176,20 @@ def inside_mesh(points, closed_mesh):
     return numpy_support.vtk_to_numpy(out) < 0
 
 
+def diffuse_labels(lab, tris, n_labels, rounds, weight):
+    """Label smoothing by diffusion. Index 0 = unlabelled. Deterministic (no random numbers)."""
+    n = len(lab)
+    src = np.concatenate([tris[:, 0], tris[:, 1], tris[:, 2], tris[:, 1], tris[:, 2], tris[:, 0]])
+    dst = np.concatenate([tris[:, 1], tris[:, 2], tris[:, 0], tris[:, 0], tris[:, 1], tris[:, 2]])
+    adj = coo_matrix((np.ones(len(src)), (src, dst)), shape=(n, n)).tocsr()
+    mean = adj.multiply(1.0 / np.asarray(adj.sum(axis=1)).ravel()[:, None]).tocsr()
+    share = np.zeros((n, n_labels + 1))
+    share[np.arange(n), lab + 1] = 1.0
+    for _ in range(rounds):
+        share = (1.0 - weight) * share + weight * (mean @ share)
+    return share.argmax(axis=1) - 1
+
+
 def smooth_labels(lab, tris, n_labels, rounds):
     """Majority vote over mesh neighbours (own label included). Index 0 = unlabelled."""
     n = len(lab)
@@ -274,7 +294,10 @@ def build(atlas, params):
         filler = smoothed_surface(MESH_DIR / a[f"filler_{hemi}"], params) if a.get(f"filler_{hemi}") else None
         if filler is not None and params["hide_inside_filler"]:
             vlab[inside_mesh(pts, filler)] = -1
-        vlab = smooth_labels(vlab, tris, len(rows), params["label_smoothing_rounds"])
+        if params["label_smoothing_method"] == "diffusion":
+            vlab = diffuse_labels(vlab, tris, len(rows), params["label_smoothing_rounds"], params["label_smoothing_weight"])
+        else:
+            vlab = smooth_labels(vlab, tris, len(rows), params["label_smoothing_rounds"])
         flab, fborder = face_labels(vlab, tris)
         if params["min_island_faces"] > 0:
             island = small_islands(flab, tris, params["min_island_faces"])

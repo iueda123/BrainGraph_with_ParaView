@@ -66,7 +66,7 @@ config.ini に次を加える（キーの一覧と既定値は config_default.in
 ### 仕組み
 
   1. `Build_Labeled_Surfaces.py` が、半球全体の表面（`vtk/without_val/Lt_ribbon.vtk` など）を三角形化・平滑化し、
-     各頂点に最寄りの領域メッシュのラベルを付け、近傍の多数決で滑らかにして、面ごとのラベルとして `vtk/labeled/<atlas>/` に保存する。
+     各頂点に最寄りの領域メッシュのラベルを付け、ラベルを近傍へ拡散させて（既定 20 回）境界を滑らかにして、面ごとのラベルとして `vtk/labeled/<atlas>/` に保存する。
      値には依存しないので、値表を替えるたびに作り直す必要はない。
   2. `PvpythonScript_Make_Figure.py` が値表の値を面ごとに割り当てて塗る。
 
