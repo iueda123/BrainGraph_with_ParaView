@@ -44,11 +44,10 @@ import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
 from vtkmodules.util import numpy_support
-from vtkmodules.vtkCommonCore import vtkObject, vtkSMPTools
+from vtkmodules.vtkCommonCore import vtkDoubleArray, vtkObject, vtkSMPTools
 from vtkmodules.vtkCommonDataModel import vtkPolyData
-from vtkmodules.vtkFiltersModeling import vtkSelectEnclosedPoints
 from vtkmodules.vtkFiltersCore import (
-    vtkExtractCells, vtkPolyDataNormals, vtkTriangleFilter, vtkWindowedSincPolyDataFilter,
+    vtkExtractCells, vtkImplicitPolyDataDistance, vtkPolyDataNormals, vtkTriangleFilter, vtkWindowedSincPolyDataFilter,
 )
 from vtkmodules.vtkFiltersGeometry import vtkGeometryFilter
 from vtkmodules.vtkCommonCore import vtkIdList
@@ -157,21 +156,18 @@ def nearest_label(points, label_points, label_ids, max_dist):
 
 
 def inside_mesh(points, closed_mesh):
-    """Boolean mask: which points lie inside the closed mesh."""
-    from vtkmodules.vtkCommonCore import vtkPoints
-    pd = vtkPolyData()
-    vp = vtkPoints()
-    vp.SetData(numpy_support.numpy_to_vtk(points.astype(np.float32), deep=True))
-    pd.SetPoints(vp)
-    sel = vtkSelectEnclosedPoints()
-    sel.SetInputData(pd)
-    sel.SetSurfaceData(closed_mesh)
-    sel.CheckSurfaceOn()
-    sel.SetTolerance(1e-4)
-    sel.Update()
-    if not sel.IsSurfaceClosed(closed_mesh):
-        sys.exit("The medial-wall filler is not a closed surface; set hide_inside_filler = 0 or fix the mesh.")
-    return numpy_support.vtk_to_numpy(sel.GetOutput().GetPointData().GetArray("SelectedPoints")).astype(bool)
+    """Boolean mask: which points lie inside the closed mesh (negative signed distance).
+
+    vtkSelectEnclosedPoints decides by casting rays in random directions, which makes points that graze
+    the surface flip from run to run; the signed distance is deterministic.
+    """
+    imp = vtkImplicitPolyDataDistance()
+    imp.SetInput(closed_mesh)
+    imp.SetTolerance(1e-9)
+    out = vtkDoubleArray()
+    out.SetNumberOfComponents(1)
+    imp.FunctionValue(numpy_support.numpy_to_vtk(np.ascontiguousarray(points, dtype=np.float64), deep=True), out)
+    return numpy_support.vtk_to_numpy(out) < 0
 
 
 def smooth_labels(lab, tris, n_labels, rounds):

@@ -6,7 +6,7 @@
 # hide_inside_filler = 1
 # min_island_faces = 200
 HEMI	OBJECT_LABEL	N_FACES	N_BORDER_FACES
-L	(unlabelled)	16325	341
+L	(unlabelled)	16323	341
 L	L_bankssts	2226	144
 L	L_caudalanteriorcingulate	1605	123
 L	L_caudalmiddlefrontal	5139	212
@@ -15,7 +15,7 @@ L	L_entorhinal	1958	124
 L	L_fusiform	7258	316
 L	L_inferiorparietal	10203	294
 L	L_inferiortemporal	7367	278
-L	L_isthmuscingulate	3028	207
+L	L_isthmuscingulate	3030	207
 L	L_lateraloccipital	10072	297
 L	L_lateralorbitofrontal	6924	278
 L	L_lingual	6538	220
