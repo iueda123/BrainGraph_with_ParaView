@@ -43,7 +43,9 @@ def merge_four_images_horizontally(image_paths, output_path):
     
 import configparser
 config = configparser.ConfigParser()
-config.read('./config.ini', encoding='utf-8')
+import os
+# BRAINGRAPH_CONFIG: path of the settings file (default ./config.ini); lets a caller run the tool without editing config.ini
+config.read(os.environ.get('BRAINGRAPH_CONFIG', './config.ini'), encoding='utf-8')
 
 # OUTPUT_FILE_NAME_PREFIX
 value_table_file = config.get('Settings', 'value_table_file')

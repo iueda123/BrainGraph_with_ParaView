@@ -53,8 +53,11 @@ config.ini に次を加える（キーの一覧と既定値は config_default.in
     LUT = 'Reds'              # 0 から増える値は ParaView の単色系プリセット + 下の反転
     lut_invert = true
 
-値表は従来と同じ（`OBJECT_LABEL<TAB>VALUE`）。値が空または `NA` の皮質領域は `na_color` で塗られる。
+値表は従来と同じ（`OBJECT_LABEL<TAB>VALUE`）。値が空または `NA` の領域（皮質も深部構造も）は `na_color` で塗られる。
 皮質の領域と深部構造は、別々の値表で別々に生成する（皮質の値表に深部構造は含めない）。
+
+設定ファイルの場所は環境変数 `BRAINGRAPH_CONFIG` で替えられる（既定は `./config.ini`）。呼び出し側のプロジェクトが、
+このツールの config.ini を書き換えずに実行するための仕組み。
 
 生成スクリプト（generate_*.sh）は、`vtk/labeled/<atlas>/` がなければ `Build_Labeled_Surfaces.py` を自動で走らせる。
 手で走らせるときは、このフォルダで `pvpython Build_Labeled_Surfaces.py [--atlas DK] [--check-report]`。
@@ -73,7 +76,6 @@ config.ini に次を加える（キーの一覧と既定値は config_default.in
 
 ### 既知の制約
 
-  * 深部構造の値が NA のとき、その構造は描かれない（皮質のように灰色では出ない）。
   * `representation = Surface` では、深部構造のメッシュを描画時に平滑化し、法線を計算し直している。
     これは、値が vtk の `normals` 欄に入っていて、ParaView がそれを照明用の法線として使ってしまうため。
   * 領域内の値は一様に塗られる。値表が大領域ごとの値なら、同じ領域の DK 領域は同じ色になる。

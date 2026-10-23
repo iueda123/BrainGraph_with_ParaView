@@ -51,6 +51,7 @@ vtkObject.GlobalWarningDisplayOff()
 vtkSMPTools.Initialize(1)  # one thread: threaded normals differ in the last float digits from run to run
 
 HERE = Path(__file__).resolve().parent
+CONFIG_PATH = Path(os.environ.get("BRAINGRAPH_CONFIG", HERE / "config.ini"))
 MESH_DIR = HERE / "vtk" / "without_val"
 
 DEFAULTS = {
@@ -65,7 +66,7 @@ DEFAULTS = {
 def load_parameters():
     params = dict(DEFAULTS)
     cfg = configparser.ConfigParser()
-    cfg.read(HERE / "config.ini", encoding="utf-8")
+    cfg.read(CONFIG_PATH, encoding="utf-8")
     if cfg.has_section("Labeling"):
         for key, default in DEFAULTS.items():
             if cfg.has_option("Labeling", key):
@@ -262,7 +263,7 @@ def main():
     args = ap.parse_args()
     if args.atlas is None:
         cfg = configparser.ConfigParser()
-        cfg.read(HERE / "config.ini", encoding="utf-8")
+        cfg.read(CONFIG_PATH, encoding="utf-8")
         args.atlas = cfg.get("Settings", "atlas", fallback="DK").split("#")[0].strip().strip("'\"")
 
     out_dir = HERE / "vtk" / "labeled" / args.atlas

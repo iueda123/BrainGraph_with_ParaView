@@ -84,7 +84,9 @@ print("showPreview: " + str(showPreview))
 
 import configparser
 config = configparser.ConfigParser()
-config.read('./config.ini', encoding='utf-8')
+import os
+# BRAINGRAPH_CONFIG: path of the settings file (default ./config.ini); lets a caller run the tool without editing config.ini
+config.read(os.environ.get('BRAINGRAPH_CONFIG', './config.ini'), encoding='utf-8')
 
 # UL_on_Fig, LL_on_Fig
 UL_on_Fig = float( config.get('Settings', 'value_range_ul_on_figure') )
@@ -340,8 +342,8 @@ keep.SetName("normals")
 out.GetPointData().AddArray(keep)
 """
 
-def load_region_with_val(vtk_file_name):
-    reader = LegacyVTKReader(registrationName=vtk_file_name, FileNames=[Folder_Roi_with_Val + '/' + vtk_file_name])
+def load_region_with_val(vtk_file_name, folder=Folder_Roi_with_Val):
+    reader = LegacyVTKReader(registrationName=vtk_file_name, FileNames=[folder + '/' + vtk_file_name])
     if REPRESENTATION != 'Surface':
         return reader
     smoothed = ProgrammableFilter(registrationName=vtk_file_name + "_smoothed", Input=reader)
@@ -352,6 +354,30 @@ def load_region_with_val(vtk_file_name):
 Regions_with_Val = []
 for vtk_file_name in load_taraget_vtk_file_names:
     Regions_with_Val.append( load_region_with_val(vtk_file_name) )
+
+#
+# painted mode: deep structures that the value table lists with an empty or NA value are drawn in na_color
+# (they have no with_val file, so their plain meshes are used)
+#
+Folder_Roi_without_Val_Early = "./vtk/without_val"
+na_deep_regions = []
+if PAINTED:
+    label_to_file = {}
+    with open("./VtkfileTable.tsv") as f:
+        for line in f:
+            if line.startswith("#") or not line.strip():
+                continue
+            cols = line.rstrip("\n").split("\t")
+            label_to_file[cols[0]] = cols[1]
+    deep_names = get_SubcorticalAreaVtkFileNames(Folder_Roi_without_Val_Early, Laterality) + get_LatVentVtkFileNames(Folder_Roi_without_Val_Early, Laterality)
+    with open(value_table_path) as f:
+        for line in f:
+            if line.startswith("#") or not line.strip():
+                continue
+            cols = line.rstrip("\n").split("\t")
+            is_na = len(cols) < 2 or cols[1].strip() in ("", "NA", "NaN", "nan")
+            if is_na and label_to_file.get(cols[0]) in deep_names:
+                na_deep_regions.append(load_region_with_val(label_to_file[cols[0]], folder=Folder_Roi_without_Val_Early))
 
 
 
@@ -513,6 +539,20 @@ if painted_active:
         borderDisplay.DiffuseColor = BORDER_COLOR
         borderDisplay.Opacity = BORDER_OPACITY
         borderDisplay.Specular = 0.0
+
+
+for NA_REGION in na_deep_regions:
+    naDisplay = Show(NA_REGION, renderView1, 'GeometryRepresentation')
+    naDisplay.ColorArrayName = ['POINTS', '']  # solid colour
+    naDisplay.AmbientColor = NA_COLOR
+    naDisplay.DiffuseColor = NA_COLOR
+    if REPRESENTATION == 'Wireframe':
+        naDisplay.SetRepresentationType('Wireframe')
+        naDisplay.RenderLinesAsTubes = 1
+        naDisplay.LineWidth = 3.0
+    else:
+        naDisplay.Representation = 'Surface'
+        naDisplay.Specular = SURFACE_SPECULAR
 
 
 for REGION in Regions_with_Val: 

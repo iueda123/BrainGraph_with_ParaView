@@ -178,13 +178,10 @@ echo ""
 # arg 3: Orientation of ColorBar. "vertical" "horizontal", or "none".
 # art 4: shouldForcelyHideEmptySubcorticalStructures. "true" or "false". 
 # art 5: showPreview. "true" or "false". 
-pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Lat none       "false" "false"
-pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Med none       "false" "false"
-pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Med none       "false" "false"
-pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Lat horizontal "false" "false"
-
-
-
+pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Lat none       "false" "false" || { echo "PvpythonScript_Make_Figure.py failed."; exit 1; }
+pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Med none       "false" "false" || { echo "PvpythonScript_Make_Figure.py failed."; exit 1; }
+pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Med none       "false" "false" || { echo "PvpythonScript_Make_Figure.py failed."; exit 1; }
+pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Lat horizontal "false" "false" || { echo "PvpythonScript_Make_Figure.py failed."; exit 1; }
 echo ""
 echo "MergePngHorizontally"
 echo ""
@@ -193,8 +190,7 @@ if [[ ${DEVELOPMENT} == true ]]; then
     /home/$USER/.pyenv/shims/jupyter nbconvert --to script ${trgt} --output ${trgt%.ipynb}
 fi
 
-python ${where_this_script_exist}/MergePngHorizontally.py
-
+python ${where_this_script_exist}/MergePngHorizontally.py || { echo "MergePng failed."; exit 1; }
 if [[ ${DEVELOPMENT} == true ]]; then
     echo ""
     #rm ./MergePngHorizontally.py

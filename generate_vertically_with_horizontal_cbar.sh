@@ -165,13 +165,10 @@ echo ""
 # arg 2: View. "Lat" or "Med".
 # arg 3: Orientation of ColorBar. "vertical" "horizontal", or "none".
 # art 4: showPreview. "true" or "false". 
-pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Lat none false
-pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Med none false
-pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Med none false
-pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Lat horizontal false
-
-
-
+pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Lat none false || { echo "PvpythonScript_Make_Figure.py failed."; exit 1; }
+pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py R Med none false || { echo "PvpythonScript_Make_Figure.py failed."; exit 1; }
+pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Med none false || { echo "PvpythonScript_Make_Figure.py failed."; exit 1; }
+pvpython ${where_this_script_exist}/PvpythonScript_Make_Figure.py L Lat horizontal false || { echo "PvpythonScript_Make_Figure.py failed."; exit 1; }
 echo ""
 echo "MergePngVertically"
 echo ""
@@ -180,8 +177,7 @@ if [[ ${DEVELOPMENT} == true ]]; then
     /home/$USER/.pyenv/shims/jupyter nbconvert --to script ${trgt} --output ${trgt%.ipynb}
 fi
 
-python ${where_this_script_exist}/MergePngVertically.py
-
+python ${where_this_script_exist}/MergePngVertically.py || { echo "MergePng failed."; exit 1; }
 if [[ ${DEVELOPMENT} == true ]]; then
     echo ""
     #rm ./MergePngVertically.py

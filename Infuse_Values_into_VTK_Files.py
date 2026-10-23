@@ -31,7 +31,9 @@ class CustomConfigParser(configparser.ConfigParser):
 # ConfigParserオブジェクトを作成
 config = CustomConfigParser()
 # ファイルを読み込む
-config.read('./config.ini', encoding='utf-8')
+import os
+# BRAINGRAPH_CONFIG: path of the settings file (default ./config.ini); lets a caller run the tool without editing config.ini
+config.read(os.environ.get('BRAINGRAPH_CONFIG', './config.ini'), encoding='utf-8')
 
 # セクションとオプションから値を取得
 value_name = config.get('Settings', 'ValueName')
