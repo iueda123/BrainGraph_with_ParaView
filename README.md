@@ -1,10 +1,11 @@
 # BrainGraph with ParaView 
 
 
-Last Updated: 2025.05.27
+Last Updated: 2026.10.23
 
 
 これはParaViewを利用して、脳の三次元グラフを生成するためのスクリプト集です。
+Desikan-Killiany (DK) 皮質領域と深部構造を値で塗り分け、見出し・カラーバー・NA 凡例つきの図まで一度に作れます。
 
 ![Four rows of cortex and deep structures coloured by Cohen's d](./files_for_readme/Example_MultiRow_CohensD.png)
 ![Cortical thickness, surface area and deep structures coloured by a regression coefficient](./files_for_readme/Example_ThreeRows_RegressionCoefficient.png)
@@ -15,27 +16,33 @@ Last Updated: 2025.05.27
 
 ## 使い方
 
-以下のような3ステップで、上記のようなグラフを簡単に作成できます。
+以下の 3 ステップで、上記のような図を作成できます。
 
 **Step 1: 領域名と値を対にしたテキストファイル(tsv)を用意する。**
   * 脳領域名は VtkFileTable.tsv で定義されている名前を使うこと。
   * 脳領域名の右隣に値を記述する。脳領域名と値の間にはタブを入れる。
-  * ./SampleValuesForCorticalAreas.tsv, ./SampleValuesForSubCorStructures.tsv を参考にしてください。 
+  * ./SampleValuesForCorticalAreas.tsv, ./SampleValuesForSubCorStructures.tsv を参考にしてください。
+  * 値が空または `NA` の領域は、灰色（`na_color`）で塗られる。皮質と深部構造は同じ表に混ぜてよい（自動で分けて描く）。
 
 **Step 2: config.ini ファイルで tsvファイルの所在、値範囲、出力先等を指定する。**
-  * ./config_default.ini を参考にしてください。
+  * ./config_default.ini を参考にしてください。環境変数 `BRAINGRAPH_CONFIG` で設定ファイルの場所を替えられる（既定は `./config.ini`）。
+  * 図の体裁（カラーバーの名前、NA 凡例、複数行など）は `[Figure]`、描画の方式（連続表面、境界線、画像サイズなど）は `[Settings]` のキーで決める。
+    詳細は下の「図の組版」と「連続表面モード」を参照。
 
 **Step 3: 生成コマンドを走らせる**
   * 以下のいずれかを走らせる
-    * ``bash generate_horizontally_with_vertical_cbar.sh``
-    * ``bash generate_horizontally_with_horizontal_cbar.sh``
-    * ``bash generate_vertically_with_vertical_cbar.sh``
-    * ``bash generate_vertically_with_horizontal_cbar.sh`` を走らせてください。
+    * ``bash generate_horizontally_with_horizontal_cbar.sh`` — 4 視野を横に並べ、カラーバーを下に付ける（上の画像はこれ）
+    * ``bash generate_horizontally_with_vertical_cbar.sh`` — 4 視野を横に並べ、カラーバーを右に付ける
+    * ``bash generate_horizontally_without_cbar.sh`` — 4 視野を横に並べ、カラーバーを付けない
+    * ``bash generate_vertically_with_horizontal_cbar.sh`` — 4 視野を縦に並べ、カラーバーを下に付ける
+    * ``bash generate_vertically_with_vertical_cbar.sh`` — 4 視野を縦に並べ、カラーバーを右に付ける
   * 既定（config.ini の `[Figure]` で `style = panel`、省略時も同じ）では、`Compose_Figure.py` が視野の画像を描き、見出し・カラーバー・NA 凡例つきの 1 枚に組む。
     値表に皮質と深部構造の両方の領域があれば、自動で分けて描き、横に並べる。`--direction`（h: 4 視野を横、v: 縦）と `--cbar`（horizontal / vertical / none）は
     スクリプトの名前（`generate_<向き>_with_<向き>_cbar.sh`、`generate_horizontally_without_cbar.sh`）で決まる。
   * 従来の出力（ParaView のカラーバー、4 視野をそのまま結合）に戻すには `[Figure]` に `style = classic` を書く。
-  * これらのスクリプトの実行には、ParaView（インストール方法は[下の方](#インストール方法)を参照）、および同階層に置かれた Infuse_Values_into_VTK_File.py, PvpythonScript_Make_Figure.py, MergePngVertically.py, MergePngHorizontally.py, config.ini が必要。python library "pands"、"Pillow" も必要。
+  * 実行には ParaView（5.12.1。インストール方法は[下の方](#インストール方法)を参照。`pvpython` に PATH が通っていること）、同階層の Compose_Figure.py, Infuse_Values_into_VTK_Files.py, Build_Labeled_Surfaces.py, PvpythonScript_Make_Figure.py, config.ini（`style = classic` では MergePng*.py も）、
+    Python ライブラリ pandas と Pillow が必要。**このフォルダを cwd にして実行すること。**
+  * 出力は `output_folder` に `<値表名>_<ValueName>.png`（空白なし）として保存される。
 
 
 -------- 
@@ -137,12 +144,17 @@ config.ini に次を加える（キーの一覧と既定値は config_default.in
 
 
 ### vtk/
-  * vtk/without_val: 型となるvtkファイルが置かれている場所
-  * vtk/with_val: 自動生成されるvtkファイルが置かれる場所
+  * vtk/without_val: 型となるvtkファイルが置かれている場所（書き換えない）
+  * vtk/with_val: 自動生成されるvtkファイルが置かれる場所（git 管理外）
+  * vtk/labeled/<atlas>: 連続表面モード用のラベル付き表面（`Build_Labeled_Surfaces.py` が生成。git 管理外）
+
+### atlases/, expected/
+  * atlases/: atlas の定義（`DK.ini`、`DK_labels.tsv`）。
+  * expected/: ラベル配分の期待値（`DK_report.tsv`）。再現性の検査に使う。
 
 ### config.ini
 
-以下のような内容とする。
+以下は最小の例（全キーは config_default.ini を参照）。
 
     [Settings]
     #
@@ -192,27 +204,36 @@ config.ini に次を加える（キーの一覧と既定値は config_default.in
   * 脳領域名とvtkファイルの対応関係が書かれている。
   * 現時点で対応している全ての脳領域が書かれている。
 
+### Compose_Figure.py
+
+  * 視野の画像を描かせ（`generate_horizontally_without_cbar.sh` を `BRAINGRAPH_RENDER_ONLY=1` で呼ぶ）、見出し・行ラベル・カラーバー・NA 凡例つきの 1 枚に組む。
+  * 使い方と設定は「図の組版」を参照。`generate_*.sh` が既定で呼ぶ。単独でも `python Compose_Figure.py [--direction h|v] [--cbar horizontal|vertical|none]` で走る。
+
 ### Infuse_Values_into_VTK_Files.py
 
-  * vtkに値を流し込み値を保持したVTKファイル達を生成するスクリプト
-  * Infuse_Values_into_VTK_Files.ipynb を Pythonスクリプトに変換して開発している。
+  * vtkに値を流し込み値を保持したVTKファイル達を生成するスクリプト（連続表面モードでは深部構造だけ）。
+  * for_develompent/Infuse_Values_into_VTK_Files.ipynb を Pythonスクリプトに変換して開発している。
+
+### Build_Labeled_Surfaces.py
+
+  * 連続表面モード用に、半球全体の表面へ領域のラベルを付ける。値に依存しない前処理で、`vtk/labeled/<atlas>/` がなければ `generate_*.sh` が自動で走らせる。
 
 ### PvpythonScript_Make_Figure.py
 
   * ParaViewの操作レコード機能を使いながら作ったスクリプト。
-  * 値を保持VTK達を読込みPNGを生成するスクリプト。
+  * 値表の値を読み込み、視野ごとのPNGを生成する（引数: 半球 L/R、視野 Lat/Med、カラーバーの向き、…）。
 
 ### MergePngHorizontally.py, MergePngVertically.py
 
-  * ４つの画像（右大脳半球外側画像、右大脳半球内側画像、左大脳半球内側画像、左大脳半球外側画像）を水平または垂直方向に結合するためのスクリプト。
-  * MergePngHorizontally.ipynb, MergePngVertically.ipynb ファイルをPythonスクリプトへ変換して開発している。
+  * `style = classic` のとき、４つの画像（右大脳半球外側画像、右大脳半球内側画像、左大脳半球内側画像、左大脳半球外側画像）を水平または垂直方向に結合するためのスクリプト。
 
-### generate_horizontally.sh, generate_vertically.sh
+### generate_*.sh
 
-  * 実際に呼び出すためのBashスクリプト。
-  * 内部で Infuse_Values_into_VTK_Files.py, PvpythonScript_Make_Figure.py, MergePngHorizontally.py/MergePngVertically.py を呼び出している。
+  * 実際に呼び出すためのBashスクリプト（5 本。使い分けは「使い方」の Step 3）。
+  * `style = panel` では Compose_Figure.py を呼ぶ。`style = classic` では Infuse_Values_into_VTK_Files.py, Build_Labeled_Surfaces.py, PvpythonScript_Make_Figure.py, MergePng*.py を順に呼ぶ。
+  * `generate_horizontally_without_cbar.sh` は、Compose_Figure.py が視野の画像を描くときの描画役も兼ねる。
 
-### ReadMe.md and files_for_readme/
+### README.md and files_for_readme/
 
   * This file and files for this file.
 
