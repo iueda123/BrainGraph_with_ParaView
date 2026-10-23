@@ -116,6 +116,33 @@ print("Unit: " + Unit)
 SPECULAR = float( config.get('Settings', 'SPECULAR') )
 print("SPECULAR: " + str(SPECULAR))
 
+# --- Settings added with the painted-surface mode (all optional; the defaults keep the old behaviour) ---
+def get_optional_setting(key, default):
+    if config.has_option('Settings', key):
+        return config.get('Settings', key).split('#')[0].strip().replace("\"", "").replace("\'", "")
+    return default
+
+# surface_mode: 'parcels' draws every label as its own mesh (the former behaviour).
+#               'painted' paints one continuous cortical surface per hemisphere (needs Build_Labeled_Surfaces.py).
+SURFACE_MODE = get_optional_setting('surface_mode', 'parcels')
+ATLAS = get_optional_setting('atlas', 'DK')
+# border_opacity: opacity of the thin lines drawn where the label changes (0 = no lines). painted mode only.
+BORDER_OPACITY = float(get_optional_setting('border_opacity', '0'))
+BORDER_COLOR = [float(x) for x in get_optional_setting('border_color', '0.25, 0.25, 0.25').split(',')]
+# na_color: colour of cortical labels that have no value in the value table. painted mode only.
+NA_COLOR = [float(x) for x in get_optional_setting('na_color', '0.74, 0.74, 0.74').split(',')]
+# representation: how the deep structures are drawn. 'Wireframe' (former behaviour) or 'Surface'.
+REPRESENTATION = get_optional_setting('representation', 'Wireframe')
+# surface_specular: specular of the painted cortical surface and (when representation = Surface) the deep structures.
+SURFACE_SPECULAR = float(get_optional_setting('surface_specular', '0.12'))
+# lut_invert: reverse the colour map. ParaView's single-hue presets (Reds, Blues, ...) run from dark (low) to light (high).
+LUT_INVERT = get_optional_setting('lut_invert', 'false').lower() == 'true'
+print("SURFACE_MODE: " + SURFACE_MODE)
+print("ATLAS: " + ATLAS)
+print("BORDER_OPACITY: " + str(BORDER_OPACITY))
+print("NA_COLOR: " + str(NA_COLOR))
+print("REPRESENTATION: " + REPRESENTATION)
+
 # OUTPUT_FOLDER
 OUTPUT_FOLDER = config.get('Settings', 'output_folder')
 OUTPUT_FOLDER = OUTPUT_FOLDER.replace("\"", "").replace("\'", "")
@@ -253,16 +280,78 @@ def get_LatVentVtkFileNames(folder_path, lat):
     return file_names
 
 
-load_taraget_vtk_file_names = get_SurfaceAreaVtkFileNames(Folder_Roi_with_Val, Laterality) # 片脳のみロード
+# 
+# painted mode: which labels of the atlas does the value table contain for this hemisphere?
+#
+PAINTED = (SURFACE_MODE == 'painted')
+LABELED_DIR = "./vtk/labeled/" + ATLAS
+painted_values = {}   # label ID -> value
+painted_active = False
+import os
+if PAINTED:
+    import csv
+    label_ids = {}
+    with open(LABELED_DIR + "/" + ATLAS + "_labels.tsv") as f:
+        for row in csv.DictReader(f, delimiter="\t"):
+            if row["HEMI"] == Laterality:
+                label_ids[row["OBJECT_LABEL"]] = int(row["LabelID"])
+    value_table_path = value_table_file.replace("\"", "").replace("\'", "")
+    with open(value_table_path) as f:
+        for line in f:
+            if line.startswith("#") or not line.strip():
+                continue
+            cols = line.rstrip("\n").split("\t")
+            if cols[0] in label_ids and len(cols) > 1 and cols[1].strip() not in ("", "NA", "NaN", "nan"):
+                painted_values[label_ids[cols[0]]] = float(cols[1])
+    # A hemisphere is painted when the table names at least one of its labels (a label with NA counts).
+    with open(value_table_path) as f:
+        painted_active = any(l.split("\t")[0] in label_ids for l in f if not l.startswith("#") and l.strip())
+print("PAINTED: " + str(PAINTED) + " / painted_active: " + str(painted_active))
+
+load_taraget_vtk_file_names = []
+if not painted_active:
+    load_taraget_vtk_file_names = get_SurfaceAreaVtkFileNames(Folder_Roi_with_Val, Laterality) # 片脳のみロード
 load_taraget_vtk_file_names = load_taraget_vtk_file_names  +  get_SubcorticalAreaVtkFileNames(Folder_Roi_with_Val, Laterality) # 片脳のみロード
 load_taraget_vtk_file_names = load_taraget_vtk_file_names  +  get_CCVtkFileNames(Folder_Roi_with_Val, Laterality) # 片脳のみロード
 load_taraget_vtk_file_names = load_taraget_vtk_file_names  +  get_LatVentVtkFileNames(Folder_Roi_with_Val, Laterality) # 片脳のみロード
 
 
 # Load Target VTK Files
+# The values are stored in the "normals" array of these files (see Infuse_Values_into_VTK_Files.py), and ParaView
+# also takes that array as the surface normals for lighting. With representation = Surface that makes the
+# shading wrong, so the mesh is smoothed and given real normals ("SurfaceNormals"); "normals" stays a plain value array.
+SMOOTH_AND_RENORMAL_SCRIPT = """
+import numpy as np
+from vtkmodules.util import numpy_support
+from vtkmodules.vtkCommonCore import vtkObject
+from vtkmodules.vtkFiltersCore import vtkPolyDataNormals, vtkTriangleFilter, vtkWindowedSincPolyDataFilter
+src = self.GetInput()
+values = src.GetPointData().GetArray("normals")
+tri = vtkTriangleFilter(); tri.SetInputData(src); tri.PassLinesOff(); tri.PassVertsOff()
+sm = vtkWindowedSincPolyDataFilter(); sm.SetInputConnection(tri.GetOutputPort())
+sm.SetNumberOfIterations(25); sm.SetPassBand(0.08); sm.NonManifoldSmoothingOn(); sm.NormalizeCoordinatesOn()
+nm = vtkPolyDataNormals(); nm.SetInputConnection(sm.GetOutputPort())
+nm.SetFeatureAngle(80); nm.SplittingOff(); nm.ComputePointNormalsOn(); nm.Update()
+out = self.GetOutput()
+out.ShallowCopy(nm.GetOutput())
+out.GetPointData().GetNormals().SetName("SurfaceNormals")
+keep = numpy_support.numpy_to_vtk(numpy_support.vtk_to_numpy(values).copy(), deep=True)
+keep.SetName("normals")
+out.GetPointData().AddArray(keep)
+"""
+
+def load_region_with_val(vtk_file_name):
+    reader = LegacyVTKReader(registrationName=vtk_file_name, FileNames=[Folder_Roi_with_Val + '/' + vtk_file_name])
+    if REPRESENTATION != 'Surface':
+        return reader
+    smoothed = ProgrammableFilter(registrationName=vtk_file_name + "_smoothed", Input=reader)
+    smoothed.OutputDataSetType = 'vtkPolyData'
+    smoothed.Script = SMOOTH_AND_RENORMAL_SCRIPT
+    return smoothed
+
 Regions_with_Val = []
 for vtk_file_name in load_taraget_vtk_file_names:
-    Regions_with_Val.append( LegacyVTKReader(registrationName=vtk_file_name, FileNames=[Folder_Roi_with_Val + '/' + vtk_file_name]) )
+    Regions_with_Val.append( load_region_with_val(vtk_file_name) )
 
 
 
@@ -277,7 +366,7 @@ hippo_vtk = None
 amygdala_vtk = None
 
 shouldLoadEmptySubcorticalStructures = None
-if( len(get_SurfaceAreaVtkFileNames(Folder_Roi_with_Val, Laterality)) > 0 ): 
+if( painted_active or len(get_SurfaceAreaVtkFileNames(Folder_Roi_with_Val, Laterality)) > 0 ): 
     # ./vtk/with_val フォルダ内に皮質領域のVTKファイルが1つ以上存在する場合
     shouldLoadEmptySubcorticalStructures = True
 else: 
@@ -287,20 +376,25 @@ else:
 
 if shouldForcelyHideEmptySubcorticalStructures:
     shouldLoadEmptySubcorticalStructures = False   # 強制的に値０の皮質下領域を非表示にする
+
+# painted mode: the surface itself covers the cortex, so only the medial-wall filler (Empty_CC) is kept as context
+loadHippoAndAmygdala = shouldLoadEmptySubcorticalStructures and not painted_active
     
 
 if Laterality == "L": 
     ribbonvtk = LegacyVTKReader(registrationName='Lt_ribbon.vtk', FileNames=[Folder_Roi_without_Val + '/Lt_ribbon.vtk'])
-    if shouldLoadEmptySubcorticalStructures: 
+    if shouldLoadEmptySubcorticalStructures and not painted_active: 
         empty_ccvtk = LegacyVTKReader(registrationName='Lt_Empty_CC.vtk', FileNames=[Folder_Roi_without_Val + '/Lt_Empty_CC.vtk'])
-        hippo_vtk = LegacyVTKReader(registrationName='086_Left-Hippocampus.vtk', FileNames=[Folder_Roi_without_Val + '/078_Left-Hippocampus.vtk'])
-        amygdala_vtk = LegacyVTKReader(registrationName='079_Left-Amygdala.vtk.vtk', FileNames=[Folder_Roi_without_Val + '/079_Left-Amygdala.vtk'])
+        if loadHippoAndAmygdala:
+            hippo_vtk = LegacyVTKReader(registrationName='086_Left-Hippocampus.vtk', FileNames=[Folder_Roi_without_Val + '/078_Left-Hippocampus.vtk'])
+            amygdala_vtk = LegacyVTKReader(registrationName='079_Left-Amygdala.vtk.vtk', FileNames=[Folder_Roi_without_Val + '/079_Left-Amygdala.vtk'])
 elif Laterality == "R": 
     ribbonvtk = LegacyVTKReader(registrationName='Rt_ribbon.vtk', FileNames=[Folder_Roi_without_Val + '/Rt_ribbon.vtk'])
-    if shouldLoadEmptySubcorticalStructures: 
+    if shouldLoadEmptySubcorticalStructures and not painted_active: 
         empty_ccvtk = LegacyVTKReader(registrationName='Rt_Empty_CC.vtk', FileNames=[Folder_Roi_without_Val + '/Rt_Empty_CC.vtk'])
-        hippo_vtk = LegacyVTKReader(registrationName='086_Right-Hippocampus.vtk', FileNames=[Folder_Roi_without_Val + '/086_Right-Hippocampus.vtk'])
-        amygdala_vtk = LegacyVTKReader(registrationName='087_Right-Amygdala.vtk', FileNames=[Folder_Roi_without_Val + '/087_Right-Amygdala.vtk'])
+        if loadHippoAndAmygdala:
+            hippo_vtk = LegacyVTKReader(registrationName='086_Right-Hippocampus.vtk', FileNames=[Folder_Roi_without_Val + '/086_Right-Hippocampus.vtk'])
+            amygdala_vtk = LegacyVTKReader(registrationName='087_Right-Amygdala.vtk', FileNames=[Folder_Roi_without_Val + '/087_Right-Amygdala.vtk'])
         
 
 
@@ -335,6 +429,10 @@ if not amygdala_vtk == None:
 # trace defaults for the display properties.
 ribbonvtkDisplay.Representation = 'Surface'
 
+if painted_active:
+    # the painted surface is the same mesh as the ribbon; drawing both would only make them fight over the pixels
+    Hide(ribbonvtk, renderView1)
+
 # get the material library
 materialLibrary1 = GetMaterialLibrary()
 
@@ -354,6 +452,67 @@ renderView1.ResetCamera(False, 0.9)
 
 
 normalsLUTColorBar = None
+valueLUTColorBar = None
+
+if painted_active:
+    import numpy as np
+    from vtkmodules.util import numpy_support
+    from vtkmodules.vtkIOLegacy import vtkPolyDataReader
+
+    prefix = "Lt" if Laterality == "L" else "Rt"
+    reader = vtkPolyDataReader()
+    reader.SetFileName(LABELED_DIR + "/" + prefix + "_surface.vtk")
+    reader.Update()
+    painted_poly = reader.GetOutput()
+
+    # one value per face: the value of its label, NaN where the label has no value (or the face has no label)
+    face_label = numpy_support.vtk_to_numpy(painted_poly.GetCellData().GetArray("LabelID"))
+    value_of_label = np.full(max(painted_values.keys(), default=0) + 2, np.nan)
+    for label_id, value in painted_values.items():
+        value_of_label[label_id] = value
+    in_range = (face_label >= 0) & (face_label < len(value_of_label))
+    face_value = np.full(len(face_label), np.nan)
+    face_value[in_range] = value_of_label[face_label[in_range]]
+    value_array = numpy_support.numpy_to_vtk(face_value, deep=True)
+    value_array.SetName("Value")
+    painted_poly.GetCellData().AddArray(value_array)
+
+    paintedSurface = TrivialProducer(registrationName=prefix + "_painted_surface")
+    paintedSurface.GetClientSideObject().SetOutput(painted_poly)
+    paintedSurface.UpdatePipeline()
+
+    paintedDisplay = Show(paintedSurface, renderView1, 'GeometryRepresentation')
+    paintedDisplay.Representation = 'Surface'
+    ColorBy(paintedDisplay, ('CELLS', 'Value'))
+    paintedDisplay.Specular = SURFACE_SPECULAR
+
+    valueLUT = GetColorTransferFunction('Value')
+    valueLUT.RescaleTransferFunction(LL_on_Fig, UL_on_Fig)
+    valueLUT.ApplyPreset(LUT, True)
+    if LUT_INVERT:
+        valueLUT.InvertTransferFunction()
+    valueLUT.NanColor = NA_COLOR
+    valueLUTColorBar = GetScalarBar(valueLUT, renderView1)
+    # when deep structures are drawn too, their colour bar (below) is the one that is shown
+    paintedDisplay.SetScalarBarVisibility(renderView1, displayColorBarAndLegend and len(Regions_with_Val) == 0)
+
+    # medial wall: a smoothed, opaque filler instead of the raw (voxel-edged) Empty_CC mesh
+    if os.path.exists(LABELED_DIR + "/" + prefix + "_filler.vtk"):
+        fillerMesh = LegacyVTKReader(registrationName=prefix + "_filler.vtk", FileNames=[LABELED_DIR + "/" + prefix + "_filler.vtk"])
+        fillerDisplay = Show(fillerMesh, renderView1, 'GeometryRepresentation')
+        fillerDisplay.ColorArrayName = ['POINTS', '']  # solid colour
+        fillerDisplay.AmbientColor = NA_COLOR
+        fillerDisplay.DiffuseColor = NA_COLOR
+        fillerDisplay.Specular = 0.0
+
+    if BORDER_OPACITY > 0:
+        borderLayer = LegacyVTKReader(registrationName=prefix + "_border.vtk", FileNames=[LABELED_DIR + "/" + prefix + "_border.vtk"])
+        borderDisplay = Show(borderLayer, renderView1, 'GeometryRepresentation')
+        borderDisplay.ColorArrayName = ['POINTS', '']  # solid colour
+        borderDisplay.AmbientColor = BORDER_COLOR
+        borderDisplay.DiffuseColor = BORDER_COLOR
+        borderDisplay.Opacity = BORDER_OPACITY
+        borderDisplay.Specular = 0.0
 
 
 for REGION in Regions_with_Val: 
@@ -403,6 +562,8 @@ for REGION in Regions_with_Val:
     # LUT指定
     #
     normalsLUT.ApplyPreset(LUT, True)
+    if LUT_INVERT:
+        normalsLUT.InvertTransferFunction()
     
     #
     # 輝き度合い
@@ -412,9 +573,13 @@ for REGION in Regions_with_Val:
     #
     # ワイヤーフレーム化
     #
-    REGION.SetRepresentationType('Wireframe')
-    REGION.RenderLinesAsTubes = 1
-    REGION.LineWidth = 3.0
+    if REPRESENTATION == 'Wireframe':
+        REGION.SetRepresentationType('Wireframe')
+        REGION.RenderLinesAsTubes = 1
+        REGION.LineWidth = 3.0
+    else:
+        REGION.SetRepresentationType('Surface')
+        REGION.Specular = SURFACE_SPECULAR
     
     #
     # 後に使うため Color Legend Object の確保
@@ -452,21 +617,26 @@ renderView1.Background = [1.0, 1.0, 1.0]  # 白色
 # Color Bar and Legend の調整
 #
 
+# the colour bar that is formatted below: the deep structures' bar if there is one, else the painted surface's
+colorBar = normalsLUTColorBar if normalsLUTColorBar is not None else valueLUTColorBar
+if colorBar is None:
+    colorBar = GetScalarBar(GetColorTransferFunction('normals'), renderView1)  # nothing coloured: formatting is harmless
+
 # 文字を黒化
-normalsLUTColorBar.TitleColor = [0.0, 0.0, 0.0]
-normalsLUTColorBar.LabelColor = [0.0, 0.0, 0.0]
+colorBar.TitleColor = [0.0, 0.0, 0.0]
+colorBar.LabelColor = [0.0, 0.0, 0.0]
 
 # 文字を入れる
-normalsLUTColorBar.Title = ValueName # タイトル
+colorBar.Title = ValueName # タイトル
 
 
 if Unit != "": 
-    normalsLUTColorBar.ComponentTitle = '[' + Unit + ']' # 単位あり 
+    colorBar.ComponentTitle = '[' + Unit + ']' # 単位あり 
 else: 
-    normalsLUTColorBar.ComponentTitle = '' # 単位なし
+    colorBar.ComponentTitle = '' # 単位なし
     
 # 最大値、最小値の表示
-# normalsLUTColorBar.DrawDataRange = 1
+# colorBar.DrawDataRange = 1
 
 
 # 
@@ -474,28 +644,28 @@ else:
 # 
 if makeBarOrientationHorizontal == True: 
     # 水平
-    normalsLUTColorBar.WindowLocation = 'Lower Center'
-    normalsLUTColorBar.AutoOrient = 0 # マニュアル
-    normalsLUTColorBar.Orientation = 'Horizontal' # バー水平
-    normalsLUTColorBar.HorizontalTitle = 1 # 文字列水平
-    normalsLUTColorBar.TextPosition = 'Ticks right/top, annotations left/bottom' # テキスト位置を右や上
-    normalsLUTColorBar.ScalarBarThickness = 24 #ColorBarの太さ
-    normalsLUTColorBar.ScalarBarLength = 0.90 #ColorBarの長さ
-    normalsLUTColorBar.TitleFontSize = 24 #タイトルフォントサイズ
-    normalsLUTColorBar.LabelFontSize = 24 #ラベルフォントサイズ
+    colorBar.WindowLocation = 'Lower Center'
+    colorBar.AutoOrient = 0 # マニュアル
+    colorBar.Orientation = 'Horizontal' # バー水平
+    colorBar.HorizontalTitle = 1 # 文字列水平
+    colorBar.TextPosition = 'Ticks right/top, annotations left/bottom' # テキスト位置を右や上
+    colorBar.ScalarBarThickness = 24 #ColorBarの太さ
+    colorBar.ScalarBarLength = 0.90 #ColorBarの長さ
+    colorBar.TitleFontSize = 24 #タイトルフォントサイズ
+    colorBar.LabelFontSize = 24 #ラベルフォントサイズ
 else: 
      # 垂直
-    normalsLUTColorBar.WindowLocation = 'Lower Right Corner'
-    normalsLUTColorBar.AutoOrient = 0 # マニュアル
-    normalsLUTColorBar.Orientation = 'Vertical' # バー垂直
-    normalsLUTColorBar.HorizontalTitle = 0 # 文字列垂直
-    normalsLUTColorBar.TextPosition = 'Ticks left/bottom, annotations right/top' # テキスト位置を左や下
-    #normalsLUTColorBar.TextPosition = 'Ticks right/top, annotations left/bottom' # テキスト位置を右や上
-    #normalsLUTColorBar.HorizontalTitle = 1 # タイトルを横書き
-    normalsLUTColorBar.ScalarBarThickness = 36 #ColorBarの太さ
-    normalsLUTColorBar.ScalarBarLength = 0.28 #ColorBarの長さ
-    normalsLUTColorBar.TitleFontSize = 20 #タイトルフォントサイズ
-    normalsLUTColorBar.LabelFontSize = 20 #ラベルフォントサイズ
+    colorBar.WindowLocation = 'Lower Right Corner'
+    colorBar.AutoOrient = 0 # マニュアル
+    colorBar.Orientation = 'Vertical' # バー垂直
+    colorBar.HorizontalTitle = 0 # 文字列垂直
+    colorBar.TextPosition = 'Ticks left/bottom, annotations right/top' # テキスト位置を左や下
+    #colorBar.TextPosition = 'Ticks right/top, annotations left/bottom' # テキスト位置を右や上
+    #colorBar.HorizontalTitle = 1 # タイトルを横書き
+    colorBar.ScalarBarThickness = 36 #ColorBarの太さ
+    colorBar.ScalarBarLength = 0.28 #ColorBarの長さ
+    colorBar.TitleFontSize = 20 #タイトルフォントサイズ
+    colorBar.LabelFontSize = 20 #ラベルフォントサイズ
 
 
 

@@ -334,10 +334,24 @@ if os.path.isdir(dest_vtk_folder):
     shutil.rmtree(dest_vtk_folder)
     os.mkdir(dest_vtk_folder)
 
+# surface_mode = painted: the cortex is painted from the value table by PvpythonScript_Make_Figure.py,
+# so the per-label cortical meshes need no values.
+surface_mode = 'parcels'
+if config.has_option('Settings', 'surface_mode'):
+    surface_mode = config.get('Settings', 'surface_mode').split('#')[0].strip()
+import re
+cortical_mesh = re.compile(r'^[0-9]+_ctx-(lh|rh)-')
+
 for r in range(0, len(df_value_file_table)):
     #print(r)
     dest_vtk_file = df_value_file_table["VTK_FILE"][r]
     obj_val = df_value_file_table["VALUE"][r]
+    if pd.isna(obj_val) or pd.isna(dest_vtk_file):
+        print("Skip " + str(df_value_file_table["OBJECT_LABEL"][r]) + " (no value, or no vtk file)")
+        continue
+    if surface_mode == 'painted' and cortical_mesh.match(dest_vtk_file):
+        print("Skip " + dest_vtk_file + " (painted mode: the cortex is painted from the value table)")
+        continue
     print("Infuse " + str(obj_val) + " into " + dest_vtk_file)
     infuseValueIntoAVtkFile(
         input_roi_vtk_file_path=src_vtk_folder + "/" + dest_vtk_file, 

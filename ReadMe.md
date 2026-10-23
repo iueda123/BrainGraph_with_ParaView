@@ -34,6 +34,68 @@ Last Updated: 2025.05.27
 
 -------- 
 
+## 連続表面モード（surface_mode = painted）
+
+Last Updated: 2026.10.23
+
+皮質の領域を 1 枚ずつ別のメッシュとして描くと、領域の境界に隙間が出て、縁がボクセルの階段状のまま残る。
+`surface_mode = painted` では、半球全体の連続した皮質表面を領域のラベルで塗り分けるので、隙間が出ない。
+config.ini に `surface_mode` がなければ従来どおり（`parcels`）に動く。
+
+### 使い方
+
+config.ini に次を加える（キーの一覧と既定値は config_default.ini）。
+
+    surface_mode = painted
+    atlas = DK
+    border_opacity = 0        # 0.3〜0.5 にすると領域の境界に細い線が出る
+    representation = Surface  # 深部構造を滑らかに描く（Wireframe は従来の点描風）
+    LUT = 'Reds'              # 0 から増える値は ParaView の単色系プリセット + 下の反転
+    lut_invert = true
+
+値表は従来と同じ（`OBJECT_LABEL<TAB>VALUE`）。値が空または `NA` の皮質領域は `na_color` で塗られる。
+皮質の領域と深部構造は、別々の値表で別々に生成する（皮質の値表に深部構造は含めない）。
+
+生成スクリプト（generate_*.sh）は、`vtk/labeled/<atlas>/` がなければ `Build_Labeled_Surfaces.py` を自動で走らせる。
+手で走らせるときは、このフォルダで `pvpython Build_Labeled_Surfaces.py [--atlas DK] [--check-report]`。
+
+### 仕組み
+
+  1. `Build_Labeled_Surfaces.py` が、半球全体の表面（`vtk/without_val/Lt_ribbon.vtk` など）を三角形化・平滑化し、
+     各頂点に最寄りの領域メッシュのラベルを付け、近傍の多数決で滑らかにして、面ごとのラベルとして `vtk/labeled/<atlas>/` に保存する。
+     値には依存しないので、値表を替えるたびに作り直す必要はない。
+  2. `PvpythonScript_Make_Figure.py` が値表の値を面ごとに割り当てて塗る。
+
+  * 結果は決定的で、同じ入力・同じパラメータなら出力のバイトまで一致する。
+  * 再現性の検査: `expected/<atlas>_report.tsv`（領域ごとの面数）と照合する。`pvpython Build_Labeled_Surfaces.py --check-report`。
+    画像の画素は GPU やドライバで変わりうるので、検査には使わない。
+  * パラメータ（転写の最大距離、ラベル平滑化の回数など）は config.ini の `[Labeling]` で変えられる。変えたら report が変わる。
+
+### 既知の制約
+
+  * 深部構造の値が NA のとき、その構造は描かれない（皮質のように灰色では出ない）。
+  * `representation = Surface` では、深部構造のメッシュを描画時に平滑化し、法線を計算し直している。
+    これは、値が vtk の `normals` 欄に入っていて、ParaView がそれを照明用の法線として使ってしまうため。
+  * 領域内の値は一様に塗られる。値表が大領域ごとの値なら、同じ領域の DK 領域は同じ色になる。
+
+### 将来の atlas 追加（例: HCP-MMP）— 未実装。方法の概要
+
+領域ごとの vtk を ITK-SNAP の GUI で 1 ラベルずつ書き出す工程は、360 領域の atlas では現実的でない。
+連続表面モードは、ラベルが表面の頂点に届けばよい作りなので、次の方法で足せるはず。
+
+  1. fsaverage 上の annot（HCP-MMP など）から、体積ラベルを作る（FreeSurfer の `mri_aparc2aseg --annot` など）。
+  2. `atlases/<name>.ini` に `source_type = label-volume` とラベル体積の場所を書く。`labels_table` には `OBJECT_LABEL`、`HEMI`、
+     体積中のラベルの整数値を並べる。
+  3. `Build_Labeled_Surfaces.py` に `label-volume` の読み込みを実装する（体積を表面の頂点位置でサンプリングし、
+     その後の多数決の平滑化と面ラベル化は共通）。
+  4. config.ini の `atlas = <name>` を替える。
+
+実施前に確かめること: 表面（`Lt_ribbon.vtk`）の元になったラベル体積の空間と解像度（この README に記録がない）に、
+新しい体積ラベルを合わせられるか。領域数が多いと 1 領域あたりの頂点が減るので、多数決の平滑化で細い領域が痩せないか
+（report の面数の変化で見る）。
+
+-------- 
+
 ## ファイル・フォルダの説明と主要スクリプトファイルの使い方
 
 

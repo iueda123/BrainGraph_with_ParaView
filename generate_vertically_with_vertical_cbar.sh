@@ -150,6 +150,15 @@ fi
 
 
 echo ""
+echo "Build_Labeled_Surfaces (only when the labeled surfaces do not exist yet)"
+echo ""
+pvpython ${where_this_script_exist}/Build_Labeled_Surfaces.py --if-missing
+if [ ! $? -eq 0 ]; then
+    echo "Build_Labeled_Surfaces.py failed."
+    exit 1
+fi
+
+echo ""
 echo "Call pypython"
 echo ""
 # arg 1: Laterality. "R" or "L".
