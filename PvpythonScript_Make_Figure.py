@@ -139,6 +139,8 @@ REPRESENTATION = get_optional_setting('representation', 'Wireframe')
 SURFACE_SPECULAR = float(get_optional_setting('surface_specular', '0.12'))
 # lut_invert: reverse the colour map. ParaView's single-hue presets (Reds, Blues, ...) run from dark (low) to light (high).
 LUT_INVERT = get_optional_setting('lut_invert', 'false').lower() == 'true'
+# image_scale: multiplies the size of the saved images (938 x 781 px at 1). The scene is re-rendered, not enlarged.
+IMAGE_SCALE = float(get_optional_setting('image_scale', '1'))
 print("SURFACE_MODE: " + SURFACE_MODE)
 print("ATLAS: " + ATLAS)
 print("BORDER_OPACITY: " + str(BORDER_OPACITY))
@@ -870,7 +872,10 @@ if showPreview:
 
 output_file_path = OUTPUT_FOLDER + "/" + OUTPUT_FILE_NAME_PREFIX + "_" + ValueName.replace(" ", "") + "_" + Laterality + "_" + View + ".png"
 
-SaveScreenshot(output_file_path)
+if IMAGE_SCALE == 1:
+    SaveScreenshot(output_file_path)
+else:
+    SaveScreenshot(output_file_path, renderView1, ImageResolution=[int(938 * IMAGE_SCALE), int(781 * IMAGE_SCALE)])
 print(output_file_path + " was generated.")
 
 #

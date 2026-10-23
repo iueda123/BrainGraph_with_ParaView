@@ -52,6 +52,7 @@ config.ini に次を加える（キーの一覧と既定値は config_default.in
     representation = Surface  # 深部構造を滑らかに描く（Wireframe は従来の点描風）
     LUT = 'Reds'              # 0 から増える値は ParaView の単色系プリセット + 下の反転
     lut_invert = true
+    image_scale = 3           # 画像サイズを 3 倍にして描き直す（既定 1 は 938 x 781 px）
 
 値表は従来と同じ（`OBJECT_LABEL<TAB>VALUE`）。値が空または `NA` の領域（皮質も深部構造も）は `na_color` で塗られる。
 皮質の領域と深部構造は、別々の値表で別々に生成する（皮質の値表に深部構造は含めない）。
